@@ -1,0 +1,605 @@
+<title>Agent Office Floor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: architect's floor plan + task workspace on the left, operations rail (tasks, agent profile, log) on the right. */
+:root{
+  --paper:#eef2f5; --surface:#ffffff; --ink:#15202b; --muted:#5a6876; --line:#c5d0da; --plan:#2c5a87; --plan-soft:#dfe8f1;
+  --ok:#2e8a57; --ok-soft:#dcf0e4; --wait:#8a96a3; --gate:#b06f12; --gate-soft:#fbecd3; --hot:#c2410c; --bad:#b42318; --code:#f4f7fa;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d151e; --surface:#142130; --ink:#e4ebf2; --muted:#94a4b4; --line:#2b3c4f; --plan:#86b5e3; --plan-soft:#1b2d41;
+  --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d151e; --surface:#142130; --ink:#e4ebf2; --muted:#94a4b4; --line:#2b3c4f; --plan:#86b5e3; --plan-soft:#1b2d41;
+  --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1320px;margin:0 auto;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button,select{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--plan);outline-offset:2px}
+
+header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between}
+header h1{font-size:clamp(26px,4vw,38px);line-height:1.05}
+header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.conn{display:inline-flex;align-items:center;gap:8px;font:500 12px var(--mono);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--wait)}
+.conn[data-s="live"] i{background:var(--ok)}
+.conn[data-s="off"] i{background:var(--bad)}
+.banner{border:1px solid var(--gate);background:var(--gate-soft);border-radius:10px;padding:10px 14px;font-size:14px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-size:13px}
+.btn:hover:not(:disabled){border-color:var(--plan)}
+.btn.primary{background:var(--plan);border-color:var(--plan);color:var(--surface);font-weight:600}
+.btn.gate{background:var(--gate);border-color:var(--gate);color:var(--surface);font-weight:600}
+.btn.danger{color:var(--bad)}
+
+form.assign{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+form.assign label.lead{flex:1 1 100%;font-size:13px;color:var(--muted)}
+form.assign input{flex:1 1 280px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--paper);color:var(--ink);font:inherit}
+form.assign select{border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--paper);font-size:13px}
+.samples{display:flex;gap:6px;flex-wrap:wrap;flex:1 1 100%}
+.samples button{border:1px dashed var(--line);background:none;border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted)}
+.samples button:hover{border-color:var(--plan);color:var(--ink)}
+details.ctx{flex:1 1 100%;font-size:13px}
+details.ctx summary{cursor:pointer;color:var(--plan);font-weight:500}
+details.ctx textarea{width:100%;min-height:70px;margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);color:var(--ink);font:13px/1.45 var(--body);resize:vertical}
+.ctx-row{display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--muted);font-size:12px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.kpi{background:var(--surface);padding:12px 16px}
+.kpi b{display:block;font:600 26px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi.gate b{color:var(--gate)}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.main{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(300px,1fr);gap:18px;align-items:start}
+.left{display:grid;gap:18px;min-width:0}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+
+.floor{position:relative;border:2px solid var(--plan);border-radius:4px;padding:14px;background-color:var(--surface);
+  background-image:linear-gradient(var(--plan-soft) 1px,transparent 1px),linear-gradient(90deg,var(--plan-soft) 1px,transparent 1px);
+  background-size:24px 24px;display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-areas:"exec product product" "eng eng qa" "ops ops biz"}
+@media (max-width:720px){.floor{grid-template-columns:minmax(0,1fr);grid-template-areas:"exec" "product" "eng" "qa" "ops" "biz"}}
+.room{border:1.5px dashed var(--plan);border-radius:3px;padding:26px 10px 10px;position:relative;background:color-mix(in srgb,var(--surface) 88%,transparent);min-width:0}
+.room>.label{position:absolute;top:7px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;font:500 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--plan)}
+.room>.label em{font-style:normal;color:var(--muted)}
+.desks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.desk{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 9px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px;position:relative;min-width:0}
+.desk:hover{border-color:var(--plan)}
+.desk.sel{border-color:var(--plan);box-shadow:0 0 0 2px var(--plan-soft)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:600 12px var(--mono);background:var(--plan-soft);color:var(--plan);position:relative;flex:none}
+.av::after{content:"";position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;border:2px solid var(--surface);background:var(--wait)}
+[data-st="working"] .av::after{background:var(--ok)}
+[data-st="approval"] .av::after{background:var(--gate)}
+.desk[data-st="working"] .av{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px var(--ok-soft)}}
+.who{min-width:0}
+.who b{display:block;font-size:14px;line-height:1.2}
+.who small{display:block;font-size:11.5px;color:var(--muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtask{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.3;min-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.desk[data-st="working"] .dtask{color:var(--ink)}
+.desk[data-st="approval"] .dtask{color:var(--gate);font-weight:500}
+.bar{grid-column:1/-1;height:3px;background:var(--line);border-radius:2px;overflow:hidden;position:relative}
+.desk[data-st="working"] .bar::after{content:"";position:absolute;inset:0 auto 0 0;width:35%;background:var(--ok);animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{0%{left:-35%}100%{left:100%}}
+.desk .q{position:absolute;top:7px;right:8px;font:500 10px var(--mono);color:var(--muted)}
+.packet{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:3px;background:var(--hot);box-shadow:0 0 0 3px color-mix(in srgb,var(--hot) 25%,transparent);pointer-events:none;z-index:5;transition:left .8s cubic-bezier(.5,0,.3,1),top .8s cubic-bezier(.5,0,.3,1),opacity .2s}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.card h2{font-size:17px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rail{display:grid;gap:14px;min-width:0}
+
+/* workspace */
+.ws-head{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.ws-head h2{font-size:21px;margin:0}
+.ws-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ws-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.07em;padding:3px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.running{border-color:var(--ok);color:var(--ok)}
+.pill.approval{border-color:var(--gate);color:var(--gate)}
+.pill.shipped{background:var(--ok-soft);border-color:var(--ok-soft);color:var(--ok)}
+.pill.paused,.pill.rejected{border-color:var(--bad);color:var(--bad)}
+.ws-note{font-size:13px;color:var(--muted);margin:0 0 12px}
+.ws-note.err{color:var(--bad)}
+.steps{display:grid;gap:0;border-left:2px solid var(--line);margin-left:16px}
+.step{position:relative;padding:0 0 16px 24px;min-width:0}
+.step>.av{position:absolute;left:-18px;top:0;width:32px;height:32px;font-size:11px;border:2px solid var(--surface)}
+.step-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-height:32px;padding-top:5px}
+.step-h b{font-size:14px}
+.step-h small{color:var(--muted);font-size:12.5px}
+.step-h .st{margin-left:auto;font:500 11px var(--mono);color:var(--muted)}
+.step[data-st="working"] .st{color:var(--ok)}
+.step[data-st="approval"] .st{color:var(--gate)}
+.out{margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;line-height:1.55;overflow-wrap:anywhere;min-width:0;max-height:420px;overflow:auto}
+.out.live{white-space:pre-wrap;border-color:var(--ok)}
+.out h4{font:600 14px var(--display);margin:10px 0 4px}
+.out h4:first-child{margin-top:0}
+.out p{margin:0 0 8px}
+.out ul{margin:0 0 8px;padding-left:20px}
+.out pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:9px 10px;overflow-x:auto;font:12px/1.5 var(--mono);margin:6px 0 10px;white-space:pre}
+.out code{font:12.5px var(--mono);background:var(--code);padding:0 3px;border-radius:3px}
+.out pre code{background:none;padding:0}
+.out-tools{display:flex;gap:6px;margin-top:6px}
+.out-tools button{border:0;background:none;color:var(--plan);font-size:12px;padding:2px 0}
+.gatebox{margin-top:6px;border:1px solid var(--gate);background:var(--gate-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;display:grid;gap:8px}
+.empty{font-size:13.5px;color:var(--muted);margin:0}
+
+.tasks{display:grid;gap:8px}
+.t{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:7px;text-align:left;background:var(--surface);width:100%}
+.t:hover{border-color:var(--plan)}
+.t.sel{border-color:var(--plan);box-shadow:0 0 0 2px var(--plan-soft)}
+.t.approval{border-color:var(--gate);background:var(--gate-soft)}
+.t-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.t-head b{font-size:13.5px;line-height:1.3;min-width:0}
+.trail{display:flex;gap:3px}
+.trail i{height:6px;flex:1 1 10px;border-radius:2px;background:var(--line)}
+.trail i.done{background:var(--plan)}
+.trail i.now{background:var(--ok)}
+.t.approval .trail i.now{background:var(--gate)}
+.t-meta{font-size:12px;color:var(--muted)}
+
+.insp-top{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.insp-top .av{width:44px;height:44px;font-size:14px}
+.insp-top h3{font-size:20px}
+.insp-top p{margin:0;color:var(--muted);font-size:13px}
+.mission{margin:0 0 10px;font-size:13.5px}
+dl.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;margin:0 0 10px;font-size:13px}
+dl.facts dt{color:var(--muted);font:500 11px/1.9 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+dl.facts dd{margin:0;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font:400 11.5px var(--mono);padding:2px 7px;border-radius:5px;background:var(--plan-soft);color:var(--plan)}
+.chip.guard{background:var(--gate-soft);color:var(--gate)}
+.recent{display:grid;gap:4px}
+.recent button{border:0;background:none;text-align:left;padding:2px 0;color:var(--plan);font-size:13px}
+
+.feed{list-style:none;margin:0;padding:0;max-height:280px;overflow:auto;font-size:12.5px}
+.feed li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.feed li:first-child{border-top:0}
+.feed time{font:400 11.5px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1px}
+.feed .ship{color:var(--ok);font-weight:600}
+.feed .gate{color:var(--gate);font-weight:500}
+.feed .err{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){.packet{display:none}.desk[data-st="working"] .av{animation:none}.desk[data-st="working"] .bar::after{animation:none;width:100%;left:0}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Floor 1 · Software delivery</div>
+      <h1>Agent Office Floor</h1>
+      <p>Thirteen Claude-powered agents. Atlas picks the team for each task, every agent writes a real deliverable from the work before it, Lens can send code back for changes, and nothing reaches release until you approve it.</p>
+    </div>
+    <span class="conn" id="conn" data-s="wait"><i></i><span>Connecting to Claude…</span></span>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <form class="assign" id="assign">
+    <label class="lead" for="taskInput">Hand a task to Atlas. Agents run on your Claude account; the first run asks you to allow this page to use Claude.</label>
+    <input id="taskInput" placeholder="e.g. Add SSO login with Okta to the customer portal" autocomplete="off" maxlength="160">
+    <select id="depth" title="How hard the agents think">
+      <option value="quick">Fast drafts</option>
+      <option value="default" selected>Balanced</option>
+      <option value="complex">Deep work</option>
+    </select>
+    <button class="btn primary" type="submit" id="assignBtn">Assign task</button>
+    <div class="samples" id="samples"></div>
+    <details class="ctx">
+      <summary>Company context the agents work from</summary>
+      <textarea id="company"></textarea>
+      <div class="ctx-row"><button class="btn" type="button" id="saveCtx">Save context</button><span id="ctxMsg"></span></div>
+    </details>
+  </form>
+
+  <div class="kpis">
+    <div class="kpi"><b id="kOpen">0</b><span>Open tasks</span></div>
+    <div class="kpi gate"><b id="kGate">0</b><span>Waiting on your approval</span></div>
+    <div class="kpi"><b id="kShip">0</b><span>Shipped</span></div>
+    <div class="kpi"><b id="kSteps">0</b><span>Deliverables written</span></div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <section>
+        <div class="floor" id="floor"></div>
+        <div class="legend">
+          <span><i style="background:var(--ok)"></i>Working now</span>
+          <span><i style="background:var(--gate)"></i>Needs your approval</span>
+          <span><i style="background:var(--wait)"></i>Idle</span>
+          <span><i style="background:var(--hot);border-radius:2px"></i>Handoff</span>
+        </div>
+      </section>
+      <section class="card" id="ws"></section>
+    </div>
+
+    <div class="rail">
+      <div class="card">
+        <h2>Tasks <span class="eyebrow" id="taskCount"></span></h2>
+        <div class="tasks" id="tasks"></div>
+      </div>
+      <div class="card" id="insp"></div>
+      <div class="card">
+        <h2>Office log</h2>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const ROOMS=[
+ {id:"exec",name:"Executive suite",code:"RM 101"},{id:"product",name:"Product studio",code:"RM 102"},
+ {id:"eng",name:"Engineering bay",code:"RM 201"},{id:"qa",name:"QA lab",code:"RM 202"},
+ {id:"ops",name:"Cloud ops center",code:"RM 301"},{id:"biz",name:"Customer desk",code:"RM 302"}];
+const AGENTS=[
+ {id:"atlas",name:"Atlas",role:"CEO · Orchestrator",room:"exec",mission:"Reads each request, sets priority, writes the brief and picks which agents work on it, in order.",tools:["task router","priority","team picker"],guard:["Cannot release","Picks only listed agents"],
+  job:""},
+ {id:"nova",name:"Nova",role:"Product manager",room:"product",mission:"Turns requests into specs with acceptance criteria and a success metric.",tools:["spec","acceptance criteria","metrics"],guard:["Every spec has a metric"],
+  job:"Write a concise product spec with these sections: Problem, Users, Scope (in / out), Acceptance criteria (3-6, Given/When/Then), Success metric. Under 300 words."},
+ {id:"iris",name:"Iris",role:"UX designer",room:"product",mission:"Designs the user flow and screens, including empty, loading and error states.",tools:["user flows","screen specs","a11y"],guard:["WCAG AA"],
+  job:"Describe the UX: the user flow as numbered steps, each key screen with its components and its empty, loading and error states, and accessibility notes. Under 300 words."},
+ {id:"forge",name:"Forge",role:"Solutions architect",room:"eng",mission:"Chooses the technical approach and splits the work into tickets.",tools:["design notes","APIs","data models"],guard:["Names risks up front"],
+  job:"Write the technical design: approach, components and data model, APIs or interfaces, risks with mitigations, and a numbered ticket list where each ticket names its owner (Byte for backend, Pixel for frontend, Terra for infrastructure). Under 350 words."},
+ {id:"byte",name:"Byte",role:"Backend developer",room:"eng",mission:"Writes Python services and APIs with tests.",tools:["Python","pytest","FastAPI"],guard:["Tests with every change"],
+  job:"Implement the backend tickets in Python. Give the essential code in fenced code blocks (one or two files) and pytest tests, under 120 lines of code in total. If Lens requested changes above, fix every finding and list what you changed. End with 2-3 lines of notes."},
+ {id:"pixel",name:"Pixel",role:"Frontend developer",room:"eng",mission:"Builds the UI in React and TypeScript from the design and the APIs.",tools:["React","TypeScript","testing-library"],guard:["Accessible markup"],
+  job:"Implement the frontend tickets in React with TypeScript. Give the essential component code in fenced code blocks, under 100 lines in total. If Lens requested changes above, fix every finding and list what you changed."},
+ {id:"lens",name:"Lens",role:"Code reviewer",room:"eng",mission:"Reviews code and infrastructure for correctness, security, tests and cost.",tools:["code review","security","cost check"],guard:["Blocks on critical issues"],
+  job:"Review the most recent code or Terraform above. List findings as lines in the form [CRITICAL|MAJOR|MINOR] area: issue. Fix: how. Cover security, correctness, tests and cost. Then end with exactly one final line: VERDICT: APPROVE or VERDICT: CHANGES REQUESTED. Request changes only for CRITICAL or MAJOR findings."},
+ {id:"probe",name:"Probe",role:"QA engineer",room:"qa",mission:"Plans and specifies the tests that must pass before release.",tools:["test plans","edge cases","e2e"],guard:["Staging only"],
+  job:"Write the QA test plan: a Markdown table of test cases (ID, scenario, type, expected result), the edge cases you worry about, and the exit criteria for release. You cannot run tests, so do not claim results. Under 300 words."},
+ {id:"terra",name:"Terra",role:"Infrastructure engineer",room:"ops",mission:"Writes Terraform for AWS infrastructure changes.",tools:["Terraform","AWS","EKS"],guard:["Plan only; apply runs in the pipeline"],
+  job:"Write the Terraform (HCL) for AWS needed for this task in fenced code blocks, under 100 lines, with variables and tags. Then summarize the resources the plan would add, change or destroy, and how to roll back. If Lens requested changes above, fix every finding."},
+ {id:"relay",name:"Relay",role:"CI/CD release manager",room:"ops",mission:"Writes the release plan once you approve: pipeline stages, rollout, rollback.",tools:["Jenkins","Helm","feature flags"],guard:["Waits for your approval"],
+  job:"The human owner has approved this release. Write the release plan: Jenkins pipeline stages, rollout strategy (canary or blue-green, with percentages), feature flag, pre-release checklist, and exact rollback steps. Under 250 words."},
+ {id:"pulse",name:"Pulse",role:"Site reliability",room:"ops",mission:"Defines what to watch after release and when to roll back.",tools:["SLOs","CloudWatch","alerts"],guard:["Rollback triggers defined"],
+  job:"Write the post-release monitoring plan: SLOs, CloudWatch alarms with thresholds, the dashboard panels to watch, automatic rollback triggers, and the first-24-hours watch schedule. Under 200 words."},
+ {id:"echo",name:"Echo",role:"Customer support",room:"biz",mission:"Triages customer issues and tells customers when fixes ship.",tools:["triage","customer replies","status page"],guard:["No promises on dates"],
+  job:""},
+ {id:"quill",name:"Quill",role:"Marketing & sales",room:"biz",mission:"Writes release notes and launch posts for what shipped.",tools:["release notes","launch posts","sales notes"],guard:["Claims match the spec"],
+  job:"Write customer-facing release notes (3-5 bullets), a short launch post of about 120 words, and two lines of talking points for sales. No claims beyond what the team built."}
+];
+const A={};AGENTS.forEach(a=>A[a.id]=a);
+const CODERS=["byte","pixel","terra"];
+const PIPES={feature:["nova","forge","byte","lens","probe","relay","pulse","quill"],bug:["echo","byte","lens","probe","relay","echo"],infra:["forge","terra","lens","relay","pulse"],growth:["nova","quill","echo"]};
+const SAMPLES=["Fix checkout crash on Safari","Add SSO login with Okta","Migrate billing service to EKS","Launch post for the v4.2 release","Cut AWS spend on staging","Let customers export reports to CSV"];
+const DEFAULT_CTX="We are a small software company. Backend services are written in Python and run on AWS (EKS, RDS, S3). Infrastructure is managed with Terraform and released through Jenkins pipelines. The frontend is React with TypeScript. We value small, reviewable changes and safe rollbacks.";
+
+const $=s=>document.getElementById(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ini=n=>n.slice(0,2).toUpperCase();
+const now=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+
+let sample=null,db=null,live=false,blocked=false;
+const tasks=new Map();
+let selTask=null,selAgent="atlas",run=null,company=DEFAULT_CTX;
+const writeChain=new Map();
+
+/* ---------- floor ---------- */
+const floor=$("floor");
+ROOMS.forEach(r=>{
+ const el=document.createElement("div");el.className="room";el.style.gridArea=r.id;
+ el.innerHTML=`<div class="label"><span>${r.name}</span><em>${r.code}</em></div><div class="desks"></div>`;
+ AGENTS.filter(a=>a.room===r.id).forEach(a=>{
+  const b=document.createElement("button");b.className="desk";b.type="button";b.id="desk-"+a.id;
+  b.innerHTML=`<span class="av">${ini(a.name)}</span><span class="who"><b>${a.name}</b><small>${a.role}</small></span><span class="q"></span><span class="dtask"></span><span class="bar"></span>`;
+  b.addEventListener("click",()=>{selAgent=a.id;render()});
+  el.querySelector(".desks").appendChild(b)});
+ floor.appendChild(el)});
+
+function center(id){const f=floor.getBoundingClientRect(),r=$("desk-"+id).querySelector(".av").getBoundingClientRect();return{x:r.left-f.left+r.width/2,y:r.top-f.top+r.height/2}}
+function packet(from,to){
+ if(!from||!to||from===to||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ const p=document.createElement("i");p.className="packet";const a=center(from),b=center(to);
+ p.style.left=a.x+"px";p.style.top=a.y+"px";floor.appendChild(p);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.left=b.x+"px";p.style.top=b.y+"px"}));
+ setTimeout(()=>{p.style.opacity=0;setTimeout(()=>p.remove(),250)},850)}
+
+function log(html,cls){const li=document.createElement("li");li.innerHTML=`<time>${now()}</time><span class="${cls||""}">${html}</span>`;$("feed").prepend(li);while($("feed").children.length>80)$("feed").lastChild.remove()}
+
+/* ---------- markdown-lite ---------- */
+function inline(s){return s.replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>")}
+function md(src){
+ const parts=esc(src).split("```");let html="";
+ parts.forEach((p,i)=>{
+  if(i%2){html+="<pre><code>"+p.replace(/^[\w+-]*\n/,"")+"</code></pre>";return}
+  let list=false,tbl=[];
+  const flushT=()=>{if(tbl.length){html+="<pre>"+tbl.join("\n")+"</pre>";tbl=[]}};
+  p.split("\n").forEach(line=>{
+   const t=line.trim();
+   if(t.startsWith("|")){if(list){html+="</ul>";list=false}tbl.push(t);return}
+   flushT();
+   if(/^[-*] /.test(t)){if(!list){html+="<ul>";list=true}html+="<li>"+inline(t.slice(2))+"</li>";return}
+   if(list){html+="</ul>";list=false}
+   if(/^#{1,4} /.test(t)){html+="<h4>"+inline(t.replace(/^#+ /,""))+"</h4>";return}
+   if(t)html+="<p>"+inline(t)+"</p>";
+  });
+  flushT();if(list)html+="</ul>";
+ });
+ return html}
+
+/* ---------- persistence ---------- */
+function save(t){
+ if(!db)return;
+ const body={title:t.title,kind:t.kind||"",priority:t.priority||"",brief:t.brief||"",team:t.team,idx:t.idx,status:t.status,approved:!!t.approved,revised:!!t.revised,note:t.note||"",created:t.created,
+  outputs:t.outputs.map(o=>o?{agent:o.agent,text:String(o.text).slice(0,9000),at:o.at}:null)};
+ const prev=writeChain.get(t.id)||Promise.resolve();
+ const next=prev.then(()=>db.collection("tasks").doc(t.id).set(body)).catch(e=>{if(e&&e.code==="quota_exceeded")log("Storage is full. Older tasks need removing before new ones save.","err")});
+ writeChain.set(t.id,next)}
+function remove(t){tasks.delete(t.id);if(selTask===t.id)selTask=null;if(db)db.collection("tasks").doc(t.id).delete().catch(()=>{});render()}
+
+/* ---------- agent prompts ---------- */
+function teamText(t,upto){
+ let s="";
+ for(let i=0;i<upto;i++){const o=t.outputs[i];if(!o)continue;const a=A[o.agent];s+=`\n\n### ${a.name} (${a.role})\n${String(o.text).slice(0,3500)}`}
+ return s||"\n\n(none yet)"}
+function echoJob(t,i){return i===0?"Triage this as support: customer impact, reproduction steps, severity (SEV1-SEV4) with reasoning, and a short holding reply to the affected customer. Under 250 words.":"The fix has been released. Write the customer update announcing it: what was wrong, what changed, and what customers should do, if anything. Under 150 words, warm and plain."}
+function stepPrompt(t,agent){
+ const a=A[agent];
+ const job=agent==="echo"?echoJob(t,t.team.indexOf("echo")===t.idx&&t.idx<3?0:1):a.job;
+ return `You are ${a.name}, the ${a.role} agent in an AI agent team at a software company.
+Your mission: ${a.mission}
+
+Company context:
+${company}
+
+Task: ${t.title}
+Priority: ${t.priority||"P2"} · Type: ${t.kind||"feature"}
+Atlas's brief: ${t.brief||t.title}
+
+Work from teammates so far:${teamText(t,t.idx)}
+
+Your job now: ${job}
+
+Write in plain Markdown. Build on the teammates' work, do not repeat it, and be concrete and specific to this company.`}
+function atlasPrompt(title){
+ const list=AGENTS.filter(a=>a.id!=="atlas").map(a=>`- ${a.id}: ${a.role}. ${a.mission}`).join("\n");
+ return `You are Atlas, the CEO and orchestrator of an AI agent team at a software company.
+Company context:
+${company}
+
+New request from the owner: "${title}"
+
+Agents you can assign (use these ids only):
+${list}
+
+Choose who works on this request and in what order. Rules: code written by byte, pixel or terra must be followed by lens. Anything that changes production must go through relay, which only runs after the human owner approves. Put probe after lens when code changes. Leave out agents who add nothing. Use at most 9 agents.
+
+Reply with only a JSON object like:
+{"kind":"feature","priority":"P1","brief":"Two or three sentences for the team.","team":["nova","forge","byte","lens","probe","relay","pulse"]}
+kind is one of feature, bug, infra, growth. priority is one of P0, P1, P2, P3.`}
+
+function validTeam(team,kind){
+ let t=(Array.isArray(team)?team:[]).map(x=>String(x).toLowerCase().trim()).filter(x=>A[x]&&x!=="atlas");
+ t=t.filter((x,i)=>x!==t[i-1]);
+ if(!t.length)t=PIPES[kind]||PIPES.feature;
+ const lastCoder=Math.max(...CODERS.map(c=>t.lastIndexOf(c)));
+ if(lastCoder>=0){
+  if(!t.slice(lastCoder).includes("lens"))t.splice(lastCoder+1,0,"lens");
+  if(!t.includes("relay")){const after=Math.max(t.lastIndexOf("lens"),t.lastIndexOf("probe"));t.splice(after+1,0,"relay")}
+ }
+ return t.slice(0,10)}
+
+/* ---------- runner ---------- */
+const depth=()=>$("depth").value;
+function errCopy(e){
+ const c=e&&e.code;
+ if(c==="not_granted")return"You didn't allow this page to use Claude. Reload the page to be asked again.";
+ if(c==="sampling_disabled")return"Claude isn't available on this account here.";
+ if(c==="rate_limited")return"Claude usage limit reached for now. Resume this task later.";
+ if(c==="session_expired")return"Your session expired. Sign in again, then resume.";
+ if(c==="refused")return"Claude declined this step. Edit the task wording and assign it again.";
+ if(c==="invalid_json")return"Atlas returned a plan the page couldn't read. Resume to try again.";
+ return"The step was interrupted. Resume to try it again."}
+
+async function runStep(t,agent){
+ const ctl=new AbortController();
+ run={taskId:t.id,agent,ctl,text:""};render();
+ if(agent==="atlas"){
+  const plan=await sample.json(atlasPrompt(t.title),{modelTier:"quick",signal:ctl.signal,cache:false});
+  const kind=["feature","bug","infra","growth"].includes(plan&&plan.kind)?plan.kind:"feature";
+  t.kind=kind;t.priority=/^P[0-3]$/.test(plan&&plan.priority)?plan.priority:"P2";
+  t.brief=String(plan&&plan.brief||t.title).slice(0,600);
+  const team=validTeam(plan&&plan.team,kind);
+  t.team=["atlas"].concat(team);
+  return `**Routed as ${kind} · ${t.priority}**\n\n${t.brief}\n\n**Team:** ${team.map(x=>A[x].name).join(" → ")}`}
+ const {text}=await sample(stepPrompt(t,agent),{modelTier:depth(),signal:ctl.signal,cache:false,onText:({text})=>{
+  if(!run||run.ctl!==ctl)return;run.text=text;
+  const el=$("liveOut");if(el)el.textContent=text;
+  const d=$("desk-"+agent);if(d)d.querySelector(".q").textContent=Math.round(text.length/5)+"w";}});
+ return text}
+
+async function runTask(t){
+ t.status="running";t.note="";save(t);render();
+ try{
+  while(t.idx<t.team.length){
+   const agent=t.team[t.idx];
+   if(agent==="relay"&&!t.approved){
+    t.status="approval";save(t);
+    log(`Release of <b>${esc(t.title)}</b> is waiting for your approval.`,"gate");return}
+   if(agent!=="atlas")log(`${A[agent].name} started on <b>${esc(t.title)}</b>.`);
+   const out=await runStep(t,agent);
+   t.outputs[t.idx]={agent,text:out,at:Date.now()};
+   if(agent==="atlas")log(`Atlas routed <b>${esc(t.title)}</b> to ${t.team.length-1} agents.`);
+   if(agent==="lens"&&/VERDICT:\s*CHANGES/i.test(out)&&!t.revised){
+    const prior=t.team.slice(0,t.idx).filter(x=>CODERS.includes(x));
+    const coder=prior[prior.length-1];
+    if(coder){t.team.splice(t.idx+1,0,coder,"lens");t.revised=true;log(`Lens sent <b>${esc(t.title)}</b> back to ${A[coder].name} for changes.`,"gate")}
+   }
+   t.idx++;save(t);
+   if(t.idx<t.team.length)packet(agent,t.team[t.idx]);
+   run=null;render();
+  }
+  t.status="shipped";save(t);log(`<b>${esc(t.title)}</b> is complete. Every deliverable is in the workspace.`,"ship");
+ }catch(e){
+  if(e&&e.code==="cancelled"){t.status="paused";t.note="You stopped this task. Resume to continue from the same step.";}
+  else{t.status="paused";t.note=errCopy(e);log(`${esc(t.title)}: ${esc(t.note)}`,"err");
+   if(e&&(e.code==="not_granted"||e.code==="sampling_disabled")){blocked=true;showBanner(t.note)}}
+  save(t);
+ }finally{run=null;render()}}
+
+let pumping=false;
+async function pump(){
+ if(pumping||!live||blocked)return;pumping=true;
+ try{
+  for(;;){
+   const next=[...tasks.values()].filter(t=>t.status==="queued").sort((a,b)=>a.created-b.created)[0];
+   if(!next)break;
+   await runTask(next);
+   if(blocked)break;
+  }
+ }finally{pumping=false}}
+
+function newTask(title){
+ const id="t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ const t={id,title,kind:"",priority:"",brief:"",team:["atlas"],idx:0,status:"queued",approved:false,revised:false,note:"",created:Date.now(),outputs:[]};
+ tasks.set(id,t);selTask=id;save(t);log(`You assigned <b>${esc(title)}</b>.`);render();pump()}
+
+function act(kind,id){
+ const t=tasks.get(id);if(!t)return;
+ if(kind==="stop"&&run&&run.taskId===id)run.ctl.abort();
+ if(kind==="resume"&&(t.status==="paused")){t.status="queued";t.note="";save(t);render();pump()}
+ if(kind==="approve"&&t.status==="approval"){t.approved=true;t.status="queued";log(`You approved the release of <b>${esc(t.title)}</b>.`);packet("lens","relay");save(t);render();pump()}
+ if(kind==="reject"&&t.status==="approval"){t.status="rejected";t.note="You rejected this release. Nothing goes out.";log(`You rejected the release of <b>${esc(t.title)}</b>.`,"err");save(t);render()}
+ if(kind==="remove"){const b=document.querySelector(`[data-act="remove"][data-id="${id}"]`);
+  if(b&&b.dataset.armed){remove(t)}else if(b){b.dataset.armed="1";b.textContent="Click again to remove";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Remove"}},3000)}}
+}
+
+/* ---------- render ---------- */
+const STATUS={queued:"Queued",running:"Running",approval:"Needs approval",paused:"Paused",shipped:"Shipped",rejected:"Rejected"};
+function list(){return[...tasks.values()].sort((a,b)=>b.created-a.created)}
+function lastWork(agentId){
+ let best=null;tasks.forEach(t=>t.outputs.forEach(o=>{if(o&&o.agent===agentId&&(!best||o.at>best.o.at))best={t,o}}));return best}
+
+function render(){
+ const all=list();
+ const gated=all.filter(t=>t.status==="approval");
+ AGENTS.forEach(a=>{
+  const d=$("desk-"+a.id);let st="idle",txt="Free for work";
+  if(run&&run.agent===a.id){st="working";txt=(a.id==="atlas"?"Planning ":"Working on ")+(tasks.get(run.taskId)?.title||"")}
+  else if(a.id==="relay"&&gated.length){st="approval";txt="Awaiting your OK: "+gated[0].title}
+  else{const w=lastWork(a.id);if(w)txt="Last: "+w.t.title}
+  d.dataset.st=st;d.querySelector(".dtask").textContent=txt;d.classList.toggle("sel",selAgent===a.id);
+  if(st!=="working")d.querySelector(".q").textContent="";
+ });
+ $("kOpen").textContent=all.filter(t=>!["shipped","rejected"].includes(t.status)).length;
+ $("kGate").textContent=gated.length;
+ $("kShip").textContent=all.filter(t=>t.status==="shipped").length;
+ $("kSteps").textContent=all.reduce((n,t)=>n+t.outputs.filter(Boolean).length,0);
+ $("taskCount").textContent=all.length?all.length+" total":"";
+ $("tasks").innerHTML=all.length?all.map(t=>{
+  const cur=t.team[t.idx];
+  const where=t.status==="running"&&cur?A[cur].name+" is working":t.status==="queued"&&cur?"Next: "+A[cur].name:STATUS[t.status];
+  return `<button type="button" class="t ${t.status==="approval"?"approval":""} ${selTask===t.id?"sel":""}" data-open="${t.id}">
+   <span class="t-head"><b>${esc(t.title)}</b><span class="pill ${t.status}">${STATUS[t.status]}</span></span>
+   <span class="trail">${t.team.map((s,i)=>`<i class="${i<t.idx?"done":i===t.idx&&t.status!=="shipped"?"now":""}"></i>`).join("")}</span>
+   <span class="t-meta">${t.kind?esc(t.kind)+" · "+esc(t.priority)+" · ":""}${esc(where)}</span></button>`}).join("")
+  :`<p class="empty">No tasks yet. Assign one above and Atlas will build a team for it.</p>`;
+ renderWS();renderInsp()}
+
+function renderWS(){
+ const ws=$("ws");const t=selTask&&tasks.get(selTask);
+ if(!t){ws.innerHTML=`<h2 style="font-size:19px;margin-bottom:6px">Task workspace</h2><p class="empty">Every deliverable an agent writes shows up here as it is written: Nova's spec, Forge's design, Byte's code, Lens's review and the rest. Assign a task or pick one from the list to open it.</p>`;return}
+ const running=run&&run.taskId===t.id;
+ let actions="";
+ if(running)actions+=`<button class="btn danger" data-act="stop" data-id="${t.id}">Stop</button>`;
+ if(t.status==="paused")actions+=`<button class="btn primary" data-act="resume" data-id="${t.id}" ${live&&!blocked?"":"disabled"}>Resume</button>`;
+ if(!running)actions+=`<button class="btn" data-act="remove" data-id="${t.id}">Remove</button>`;
+ let html=`<div class="ws-head"><div style="min-width:0"><div class="eyebrow">Task workspace</div><h2 style="margin-top:6px">${esc(t.title)}</h2>
+  <div class="ws-meta"><span class="pill ${t.status}">${STATUS[t.status]}</span>${t.kind?`<span class="pill">${esc(t.kind)}</span><span class="pill">${esc(t.priority)}</span>`:""}<span class="pill">${t.outputs.filter(Boolean).length} of ${t.team.length} steps</span></div></div>
+  <div class="ws-actions">${actions}</div></div>`;
+ if(t.note)html+=`<p class="ws-note ${t.status==="paused"||t.status==="rejected"?"err":""}">${esc(t.note)}</p>`;
+ html+=`<div class="steps">`;
+ t.team.forEach((id,i)=>{
+  const a=A[id],o=t.outputs[i];let st="Waiting",body="",dst="idle";
+  if(o){st="Done";body=`<div class="out">${md(o.text)}</div><div class="out-tools"><button type="button" data-copy="${i}">Copy</button></div>`}
+  else if(running&&i===t.idx){st="Writing…";dst="working";body=`<div class="out live" id="liveOut">${esc(run.text||"Thinking…")}</div>`}
+  else if(i===t.idx&&t.status==="approval"){st="Needs approval";dst="approval";
+   body=`<div class="gatebox"><span>The team has finished the work above. Approve to let Relay write the release plan and the rest of the team finish. Rejecting stops the task here.</span><span class="ws-actions"><button class="btn gate" data-act="approve" data-id="${t.id}" ${live&&!blocked?"":"disabled"}>Approve release</button><button class="btn" data-act="reject" data-id="${t.id}">Reject</button></span></div>`}
+  else if(i===t.idx&&t.status==="queued")st="Up next";
+  html+=`<div class="step" data-st="${dst}"><span class="av">${ini(a.name)}</span><div class="step-h"><b>${a.name}</b><small>${a.role}</small><span class="st">${st}</span></div>${body}</div>`});
+ html+=`</div>`;
+ ws.innerHTML=html;
+ const lo=$("liveOut");if(lo)lo.scrollTop=lo.scrollHeight}
+
+function renderInsp(){
+ const a=A[selAgent];
+ const mine=[];tasks.forEach(t=>t.outputs.forEach(o=>{if(o&&o.agent===a.id)mine.push({t,o})}));
+ mine.sort((x,y)=>y.o.at-x.o.at);
+ const st=run&&run.agent===a.id?"Working":(a.id==="relay"&&[...tasks.values()].some(t=>t.status==="approval")?"Waiting on your approval":"Idle");
+ $("insp").innerHTML=`<div class="eyebrow" style="margin-bottom:10px">Agent profile · ${ROOMS.find(r=>r.id===a.room).code}</div>
+  <div class="insp-top"><span class="av">${ini(a.name)}</span><div><h3>${a.name}</h3><p>${a.role}</p></div></div>
+  <p class="mission">${a.mission}</p>
+  <dl class="facts"><dt>Status</dt><dd>${st}</dd><dt>Delivered</dt><dd>${mine.length} pieces of work</dd>
+  <dt>Skills</dt><dd><span class="chips">${a.tools.map(x=>`<span class="chip">${x}</span>`).join("")}</span></dd>
+  <dt>Limits</dt><dd><span class="chips">${a.guard.map(x=>`<span class="chip guard">${x}</span>`).join("")}</span></dd></dl>
+  ${mine.length?`<div class="eyebrow" style="margin:4px 0 6px">Recent work</div><div class="recent">${mine.slice(0,5).map(m=>`<button type="button" data-open="${m.t.id}">${esc(m.t.title)}</button>`).join("")}</div>`:`<p class="empty">Select any desk on the floor plan to see that agent.</p>`}`}
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+ const o=e.target.closest("[data-open]");if(o){selTask=o.dataset.open;render();$("ws").scrollIntoView({behavior:"smooth",block:"start"});return}
+ const b=e.target.closest("[data-act]");if(b){act(b.dataset.act,b.dataset.id);return}
+ const c=e.target.closest("[data-copy]");if(c){const t=tasks.get(selTask);const out=t&&t.outputs[+c.dataset.copy];if(!out)return;
+  try{await navigator.clipboard.writeText(out.text);c.textContent="Copied"}catch(_){const pre=c.closest(".step").querySelector(".out");const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);c.textContent="Selected, press Ctrl+C"}
+  setTimeout(()=>{c.textContent="Copy"},1800)}});
+$("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";newTask(v)});
+$("samples").innerHTML=SAMPLES.map(s=>`<button type="button">${s}</button>`).join("");
+$("samples").addEventListener("click",e=>{const b=e.target.closest("button");if(b){$("taskInput").value=b.textContent;$("taskInput").focus()}});
+$("company").value=DEFAULT_CTX;
+$("saveCtx").addEventListener("click",async()=>{
+ company=$("company").value.trim()||DEFAULT_CTX;
+ if(!db){$("ctxMsg").textContent="Used for this visit only.";return}
+ try{await db.doc("settings/company").set({profile:company});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
+
+function showBanner(msg){const b=$("banner");b.textContent=msg;b.hidden=false;const c=$("conn");c.dataset.s="off";c.querySelector("span").textContent="Agents offline";$("assignBtn").disabled=true}
+
+/* ---------- boot ---------- */
+render();
+(async()=>{
+ const cl=window.claude;
+ if(!cl||!cl.use){showBanner("Agents need Claude. Open this page on claude.ai while signed in to run them.");return}
+ const [s,d]=await Promise.all([cl.use("sample").catch(()=>null),cl.use("db").catch(()=>null)]);
+ sample=s;db=d;
+ if(!sample){showBanner("This view can't reach Claude, so the agents can't work here. Open the page on claude.ai while signed in.")}
+ else{live=true;const c=$("conn");c.dataset.s="live";c.querySelector("span").textContent="Agents online · Claude"}
+ if(!db){log("Tasks won't be saved in this view. They last until you leave the page.","err")}
+ else{
+  db.doc("settings/company").get().then(sn=>{if(sn.exists&&sn.data().profile){company=sn.data().profile;$("company").value=company}}).catch(()=>{});
+  let first=true;const timer=setTimeout(()=>log("Saved tasks are taking a while to load.","err"),10000);
+  db.collection("tasks").orderBy("created","desc").limit(40).onSnapshot(snap=>{
+   if(!snap.metadata.fromCache)clearTimeout(timer);
+   snap.docChanges().forEach(ch=>{
+    const id=ch.doc.id;
+    if(run&&run.taskId===id)return;
+    if(ch.type==="removed"){tasks.delete(id);return}
+    const local=tasks.get(id);
+    if(local&&(local.status==="running"||local.status==="queued"))return;
+    const data=ch.doc.data();
+    const t=Object.assign({id},JSON.parse(JSON.stringify(data)));
+    t.outputs=t.outputs||[];
+    if(t.status==="running"||t.status==="queued"){t.status="paused";t.note="This task was interrupted when the page closed. Resume to continue."}
+    tasks.set(id,t)});
+   if(first&&!selTask){const l=list();if(l.length)selTask=l[0].id;first=false}
+   render()},err=>{clearTimeout(timer);log("Saved tasks couldn't be loaded in this view.","err")});
+ }
+ log(live?"Office open. Agents are ready for work.":"Office open in read-only mode.");
+ render();
+})();
+})();
+</script>
