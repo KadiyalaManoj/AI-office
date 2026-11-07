@@ -181,15 +181,87 @@ dl.facts dd{margin:0;min-width:0}
 .feed .ship{color:var(--ok);font-weight:600}
 .feed .gate{color:var(--gate);font-weight:500}
 .feed .err{color:var(--bad)}
+.mode{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.mode button{border:0;background:var(--surface);padding:8px 12px;font-size:13px}
+.mode button[aria-pressed="true"]{background:var(--plan);color:var(--surface);font-weight:600}
+.rate-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.rate-row input{width:110px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--paper);color:var(--ink);font:inherit}
+.pill.review{border-color:var(--gate);color:var(--gate)}
+.pill.approved{background:var(--ok-soft);border-color:var(--ok-soft);color:var(--ok)}
+.pill.declined{border-color:var(--bad);color:var(--bad)}
+.pill.kindp{background:var(--plan-soft);border-color:var(--plan-soft);color:var(--plan)}
+.t.review{border-color:var(--gate);background:var(--gate-soft)}
+.prop{display:grid;gap:22px}
+.prop section{display:grid;gap:10px;min-width:0}
+.prop h3{font-size:16px}
+.prop ul{margin:0;padding-left:20px;font-size:13.5px;display:grid;gap:3px}
+.lead-p{font-size:15.5px;line-height:1.55;margin:0;max-width:72ch}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stats div{background:var(--surface);padding:10px 14px}
+.stats b{display:block;font:600 22px/1.15 var(--display);font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.stats{grid-template-columns:minmax(0,1fr)}}
+.tbl-wrap{overflow-x:auto}
+table.money{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.money th,table.money td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.money th{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+table.money .n{text-align:right;white-space:nowrap}
+table.money tr.total td{font-weight:600;border-bottom:0}
+.muted{color:var(--muted)}
+.gantt{display:grid;gap:5px;min-width:520px;font-size:12.5px}
+.g-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;align-items:center}
+.g-track{display:grid;gap:2px}
+.g-week{font:400 10.5px var(--mono);color:var(--muted);text-align:center}
+.g-bar{height:22px;border-radius:5px;background:var(--plan);color:var(--surface);font:500 11px/22px var(--mono);padding:0 6px;overflow:hidden;white-space:nowrap}
+.g-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phase-list{color:var(--muted)}
+.phase-list b{color:var(--ink)}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:680px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.out.flat{max-height:none;border:0;padding:4px 0 0}
+.mock-frame{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#ffffff}
+.mock-bar{display:flex;gap:6px;align-items:center;padding:7px 10px;background:var(--paper);border-bottom:1px solid var(--line);font:400 11.5px var(--mono);color:var(--muted)}
+.mock-bar i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.mock-bar span{margin-left:6px}
+.mock-host{display:block;overflow:hidden}
+.notes{display:grid;gap:8px}
+details.note{border:1px solid var(--line);border-radius:9px;padding:8px 12px}
+details.note summary{cursor:pointer;display:flex;gap:10px;align-items:center;font-size:13.5px}
+details.note summary .av{width:26px;height:26px;font-size:10px}
+details.note summary .av::after{display:none}
+ul.est{list-style:none;padding:0;font-size:12.5px}
+ul.est li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:3px 0}
+ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
+.note-s{font-size:12.5px;color:var(--muted);margin:0}
+.changes{background:var(--plan-soft);border-radius:10px;padding:12px 14px}
+.okbox{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:10px 14px;font-weight:500;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.linkbtn{border:0;background:none;color:var(--plan);text-decoration:underline;padding:0;font-size:14px}
+.progress-box{display:grid;gap:10px;margin-bottom:16px}
+.ptrail{display:flex;flex-wrap:wrap;gap:6px}
+.ptrail span{font:500 11px var(--mono);padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.ptrail span.done{background:var(--plan-soft);border-color:var(--plan-soft);color:var(--plan)}
+.ptrail span.now{border-color:var(--ok);color:var(--ok)}
+.decide{border:1px solid var(--gate);background:var(--gate-soft);border-radius:12px;padding:14px}
+.chat{display:grid;gap:8px;max-height:360px;overflow:auto;padding:2px}
+.msg{max-width:88%;padding:8px 12px;border-radius:10px;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
+.msg.user{justify-self:end;background:var(--plan);color:var(--surface)}
+.msg.assistant{justify-self:start;background:var(--surface);border:1px solid var(--line)}
+.msg p{margin:0 0 6px}.msg p:last-child{margin:0}
+.msg ul{margin:0 0 6px;padding-left:18px}
+.chat-form{display:flex;gap:8px}
+.chat-form input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit}
+.decide textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:13.5px/1.45 var(--body);resize:vertical}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px}
+.field-err{color:var(--bad);font-size:13px;min-height:1em}
 @media (prefers-reduced-motion:reduce){.packet{display:none}.desk[data-st="working"] .av{animation:none}.desk[data-st="working"] .bar::after{animation:none;width:100%;left:0}}
 </style>
 
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow">Floor 1 · Software delivery</div>
+      <div class="eyebrow">Floor 1 · Proposals and delivery</div>
       <h1>Agent Office Floor</h1>
-      <p>Thirteen Claude-powered agents. Atlas picks the team for each task, every agent writes a real deliverable from the work before it, Lens can send code back for changes, and nothing reaches release until you approve it.</p>
+      <p>Thirteen Claude-powered agents. Tell Atlas what you need and the team comes back with a proposal: budget, design, timeline and a sample screen. Discuss it, ask for changes as often as you like, and approve it to start delivery. Nothing is released until you approve that too.</p>
     </div>
     <span class="conn" id="conn" data-s="wait"><i></i><span>Connecting to Claude…</span></span>
   </header>
@@ -197,18 +269,20 @@ dl.facts dd{margin:0;min-width:0}
   <div class="banner" id="banner" hidden></div>
 
   <form class="assign" id="assign">
-    <label class="lead" for="taskInput">Hand a task to Atlas. Agents run on your Claude account; the first run asks you to allow this page to use Claude.</label>
-    <input id="taskInput" placeholder="e.g. Add SSO login with Okta to the customer portal" autocomplete="off" maxlength="160">
+    <label class="lead" for="taskInput" id="leadText">Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.</label>
+    <span class="mode" role="group" aria-label="What to ask for"><button type="button" id="modeP" aria-pressed="true">Proposal</button><button type="button" id="modeT" aria-pressed="false">Delivery task</button></span>
+    <input id="taskInput" placeholder="e.g. A customer portal where our clients can log in with Okta and download their reports" autocomplete="off" maxlength="600">
     <select id="depth" title="How hard the agents think">
       <option value="quick">Fast drafts</option>
       <option value="default" selected>Balanced</option>
       <option value="complex">Deep work</option>
     </select>
-    <button class="btn primary" type="submit" id="assignBtn">Assign task</button>
+    <button class="btn primary" type="submit" id="assignBtn">Ask for a proposal</button>
     <div class="samples" id="samples"></div>
     <details class="ctx">
       <summary>Company context the agents work from</summary>
       <textarea id="company"></textarea>
+      <div class="rate-row"><label for="rateIn">Hourly rate for budgets</label><input type="number" id="rateIn" min="1" max="2000" step="1" value="85"><label for="curIn">Currency</label><input id="curIn" value="USD" maxlength="3" style="width:70px;text-transform:uppercase"></div>
       <div class="ctx-row"><button class="btn" type="button" id="saveCtx">Save context</button><span id="ctxMsg"></span></div>
       <div class="files-row"><label for="codeIn">Codebase files the architect, developers, reviewer and QA should read:</label>
         <input type="file" id="codeIn" multiple accept=".py,.ts,.tsx,.js,.jsx,.tf,.md,.yml,.yaml,.json,.toml,.sql,.sh,.txt,.html,.css">
@@ -218,7 +292,7 @@ dl.facts dd{margin:0;min-width:0}
   </form>
 
   <div class="kpis">
-    <div class="kpi"><b id="kOpen">0</b><span>Open tasks</span></div>
+    <div class="kpi"><b id="kOpen">0</b><span>Open proposals and tasks</span></div>
     <div class="kpi gate"><b id="kGate">0</b><span>Waiting on your approval</span></div>
     <div class="kpi"><b id="kShip">0</b><span>Shipped</span></div>
     <div class="kpi"><b id="kSteps">0</b><span>Deliverables written</span></div>
@@ -240,7 +314,7 @@ dl.facts dd{margin:0;min-width:0}
 
     <div class="rail">
       <div class="card">
-        <h2>Tasks <span class="eyebrow" id="taskCount"></span></h2>
+        <h2>Work <span class="eyebrow" id="taskCount"></span></h2>
         <div class="tasks" id="tasks"></div>
       </div>
       <div class="card" id="insp"></div>
@@ -317,7 +391,7 @@ ROOMS.forEach(r=>{
 
 function center(id){const f=floor.getBoundingClientRect(),r=$("desk-"+id).querySelector(".av").getBoundingClientRect();return{x:r.left-f.left+r.width/2,y:r.top-f.top+r.height/2}}
 function packet(from,to){
- if(!from||!to||from===to||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ if(!from||!to||from===to||!$("desk-"+from)||!$("desk-"+to)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
  const p=document.createElement("i");p.className="packet";const a=center(from),b=center(to);
  p.style.left=a.x+"px";p.style.top=a.y+"px";floor.appendChild(p);
  requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.left=b.x+"px";p.style.top=b.y+"px"}));
@@ -349,7 +423,7 @@ function md(src){
 /* ---------- persistence ---------- */
 function save(t){
  if(!db)return;
- const body={title:t.title,kind:t.kind||"",priority:t.priority||"",brief:t.brief||"",team:t.team,idx:t.idx,status:t.status,approved:!!t.approved,revised:!!t.revised,note:t.note||"",created:t.created,
+ const body={title:t.title,context:t.context||"",kind:t.kind||"",priority:t.priority||"",brief:t.brief||"",team:t.team,idx:t.idx,status:t.status,approved:!!t.approved,revised:!!t.revised,note:t.note||"",created:t.created,
   outputs:t.outputs.map(o=>o?{agent:o.agent,text:String(o.text).slice(0,9000),at:o.at}:null)};
  const prev=writeChain.get(t.id)||Promise.resolve();
  const next=prev.then(()=>db.collection("tasks").doc(t.id).set(body)).catch(e=>{if(e&&e.code==="quota_exceeded")log("Storage is full. Older tasks need removing before new ones save.","err")});
@@ -396,20 +470,21 @@ ${company}${repo}
 
 Task: ${t.title}
 Priority: ${t.priority||"P2"} · Type: ${t.kind||"feature"}
-Atlas's brief: ${t.brief||t.title}
+Atlas's brief: ${t.brief||t.title}${t.context?"\n\n"+t.context:""}
 
 Work from teammates so far:${teamText(t,t.idx)}
 
 Your job now: ${job}
 
 Write in plain Markdown. Build on the teammates' work, do not repeat it, and be concrete and specific to this company.`}
-function atlasPrompt(title){
+function atlasPrompt(t){
+ const title=t.title;
  const list=AGENTS.filter(a=>a.id!=="atlas").map(a=>`- ${a.id}: ${a.role}. ${a.mission}`).join("\n");
  return `You are Atlas, the CEO and orchestrator of an AI agent team at a software company.
 Company context:
 ${company}
 
-New request from the owner: "${title}"
+New request from the owner: "${title}"${t.context?"\n\n"+t.context:""}
 
 Agents you can assign (use these ids only):
 ${list}
@@ -460,7 +535,7 @@ async function runStep(t,agent){
  const ctl=new AbortController();
  run={taskId:t.id,agent,ctl,text:""};render();
  if(agent==="atlas"){
-  const plan=await sample.json(atlasPrompt(t.title),{modelTier:"quick",signal:ctl.signal,cache:false});
+  const plan=await sample.json(atlasPrompt(t),{modelTier:"quick",signal:ctl.signal,cache:false});
   const kind=["feature","bug","infra","growth"].includes(plan&&plan.kind)?plan.kind:"feature";
   t.kind=kind;t.priority=/^P[0-3]$/.test(plan&&plan.priority)?plan.priority:"P2";
   t.brief=String(plan&&plan.brief||t.title).slice(0,600);
@@ -508,17 +583,17 @@ async function pump(){
  if(pumping||!live||blocked)return;pumping=true;
  try{
   for(;;){
-   const next=[...tasks.values()].filter(t=>t.status==="queued").sort((a,b)=>a.created-b.created)[0];
+   const next=[...tasks.values(),...props.values()].filter(t=>t.status==="queued").sort((a,b)=>a.created-b.created)[0];
    if(!next)break;
-   await runTask(next);
+   if(isProp(next.id))await runProposal(next);else await runTask(next);
    if(blocked)break;
   }
  }finally{pumping=false}}
 
-function newTask(title){
+function newTask(title,context,quiet){
  const id="t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
- const t={id,title,kind:"",priority:"",brief:"",team:["atlas"],idx:0,status:"queued",approved:false,revised:false,note:"",created:Date.now(),outputs:[]};
- tasks.set(id,t);selTask=id;save(t);log(`You assigned <b>${esc(title)}</b>.`);render();pump()}
+ const t={id,title,context:context||"",kind:"",priority:"",brief:"",team:["atlas"],idx:0,status:"queued",approved:false,revised:false,note:"",created:Date.now(),outputs:[]};
+ tasks.set(id,t);selTask=id;save(t);if(!quiet)log(`You assigned <b>${esc(title)}</b>.`);render();pump();return id}
 
 function act(kind,id){
  const t=tasks.get(id);if(!t)return;
@@ -534,9 +609,348 @@ function act(kind,id){
   if(b&&b.dataset.armed){remove(t)}else if(b){b.dataset.armed="1";b.textContent="Click again to remove";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Remove"}},3000)}}
 }
 
+/* ---------- proposals ---------- */
+const props=new Map();
+let rate=85,currency="USD",mode="proposal",chatRun=null;
+const isProp=id=>String(id||"").startsWith("p");
+const item=id=>tasks.get(id)||props.get(id);
+const PROPOSAL_SAMPLES=["Customer portal with Okta SSO for our clients","Mobile app for field technicians to log jobs","Migrate our billing system to AWS EKS","Analytics dashboard for clinic managers"];
+const PSTATUS={queued:"Queued",running:"Team is working",review:"Ready for your review",paused:"Paused",approved:"Approved",declined:"Declined"};
+const MIN_FIRST_TEAM=["nova","iris","forge"];
+const money=n=>{try{return new Intl.NumberFormat(undefined,{style:"currency",currency,maximumFractionDigits:0}).format(n)}catch(_){return currency+" "+Math.round(n).toLocaleString()}};
+const num=(v,min,max,d=0)=>{const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):d};
+const strs=(a,n=8,len=220)=>(Array.isArray(a)?a:[]).map(x=>String(x??"").trim().slice(0,len)).filter(Boolean).slice(0,n);
+const str=(v,len)=>String(v??"").trim().slice(0,len);
+
+function saveProp(p){
+ if(!db)return;
+ const body=JSON.parse(JSON.stringify(p));delete body.id;
+ if(body.mockup&&body.mockup.html)body.mockup.html=String(body.mockup.html).slice(0,40000);
+ body.chat=(body.chat||[]).slice(-24).map(m=>({role:m.role,content:String(m.content).slice(0,4000)}));
+ const prev=writeChain.get(p.id)||Promise.resolve();
+ const next=prev.then(()=>db.collection("proposals").doc(p.id).set(body)).catch(e=>{if(e&&e.code==="quota_exceeded")log("Storage is full. Remove older proposals or tasks before new ones save.","err")});
+ writeChain.set(p.id,next)}
+function removeProp(p){props.delete(p.id);if(selTask===p.id)selTask=null;if(db)db.collection("proposals").doc(p.id).delete().catch(()=>{});render()}
+
+/* budget: computed by the office from the team's own estimates, never invented by Atlas */
+function budget(p){
+ const rows=[],oneOff=[],monthly=[];
+ Object.entries(p.notes||{}).forEach(([id,n])=>{
+  if(!A[id]||!n)return;
+  const hours=(n.estimates||[]).reduce((s,e)=>s+num(e.hours,0,2000),0);
+  rows.push({id,hours,cost:hours*rate,items:n.estimates||[]});
+  (n.costs||[]).forEach(c=>(c.type==="monthly"?monthly:oneOff).push({id,item:c.item,amount:num(c.amount,0,1e6)}))});
+ const hours=rows.reduce((s,r)=>s+r.hours,0),labor=hours*rate;
+ const one=oneOff.reduce((s,c)=>s+c.amount,0),month=monthly.reduce((s,c)=>s+c.amount,0);
+ const pct=num(p.proposal&&p.proposal.contingency_pct,0,30,15);
+ const contingency=Math.round((labor+one)*pct/100);
+ return{rows,oneOff,monthly,hours,labor,one,month,pct,contingency,total:labor+one+contingency}}
+function totalWeeks(pr){return Math.max(1,...((pr&&pr.phases)||[]).map(ph=>ph.start_week+ph.weeks-1))}
+
+/* prompts */
+function revisionText(p){
+ if(p.version<=1)return"";
+ const prev=p.versions&&p.versions[p.versions.length-1];
+ return `\n\nThis is revision ${p.version} of the proposal.${prev?`\nPrevious proposal summary: ${prev.proposal.summary}\nPrevious total: ${money(prev.total)} over ${prev.weeks} weeks.`:""}\nThe owner's requested changes:\n${p.change}`}
+function kickoffPrompt(p){
+ const list=AGENTS.filter(a=>a.id!=="atlas").map(a=>`- ${a.id}: ${a.role}. ${a.mission}`).join("\n");
+ return `You are Atlas, the CEO of a software company whose team is made of AI agents. The owner has brought you a project requirement. Before you write a proposal, you brief your team and decide who should give input.
+
+Company context:
+${company}
+
+Owner's requirement:
+"${p.requirement}"${revisionText(p)}
+
+Your team (use these ids only):
+${list}
+
+${p.version<=1?"Pick 3 to 7 agents whose input shapes the scope, design, timeline or budget. Always include nova, iris and forge.":"Pick only the agents whose input must change because of the owner's requested changes (1 to 7)."}
+For each, say exactly what you need from them. Set redesign to true when the sample screen should be drawn or redrawn.
+
+Reply with only a JSON object like:
+{"title":"Short project name","understanding":"Two or three sentences on what the owner wants and why.","assumptions":["..."],"team":[{"id":"nova","ask":"What you need from them"}],"redesign":true}`}
+function teamPrompt(p,m){
+ const a=A[m.id],prevNote=p.notes&&p.notes[m.id];
+ const others=Object.entries(p.notes||{}).filter(([id])=>id!==m.id&&A[id]).map(([id,n])=>`- ${A[id].name} (${A[id].role}), ${(n.estimates||[]).reduce((s,e)=>s+num(e.hours,0,2000),0)} h: ${String(n.note).slice(0,500)}`).join("\n");
+ return `You are ${a.name}, the ${a.role} at a software company whose team is made of AI agents.
+Your mission: ${a.mission}
+Atlas, the CEO, is preparing a project proposal for the owner and asks for your input.
+
+Company context:
+${company}
+
+Owner's requirement: "${p.requirement}"
+Atlas's understanding: ${p.kickoff.understanding}
+Atlas asks you: ${m.ask}${revisionText(p)}${prevNote?`\n\nYour previous input: ${prevNote.note}\nYour previous estimates: ${JSON.stringify(prevNote.estimates)}`:""}
+
+Input from teammates so far:
+${others||"(none yet)"}
+
+Estimate hours only for your own work, for a small professional team. The office turns hours into money at ${rate} ${currency} per hour, so give hours, not money. Add costs only for things that must be bought or run (cloud services, licences, tools), in ${currency}; use [] when there are none.
+
+Reply with only a JSON object like:
+{"note":"Your recommendation from your role, in plain Markdown, under 160 words.","estimates":[{"item":"Work item","hours":24}],"costs":[{"item":"AWS RDS db.t4g.medium","type":"monthly","amount":60}],"risks":["..."],"weeks":2}
+type is monthly or one_off.`}
+function synthPrompt(p){
+ const b=budget(p);
+ const input=Object.entries(p.notes||{}).filter(([id])=>A[id]).map(([id,n])=>`### ${A[id].name} (${A[id].role}): ${(n.estimates||[]).reduce((s,e)=>s+num(e.hours,0,2000),0)} h, about ${n.weeks||"?"} weeks\n${n.note}\nWork items: ${(n.estimates||[]).map(e=>`${e.item} (${e.hours} h)`).join("; ")}\nRisks: ${(n.risks||[]).join("; ")||"none"}`).join("\n\n");
+ return `You are Atlas, the CEO. Write the project proposal for the owner from your team's input.
+
+Company context:
+${company}
+
+Owner's requirement: "${p.requirement}"
+Your understanding: ${p.kickoff.understanding}
+Assumptions: ${(p.kickoff.assumptions||[]).join("; ")||"none"}${revisionText(p)}
+
+Team input:
+${input}
+
+The office calculated the budget from the team's estimates: ${b.hours} hours at ${rate} ${currency}/h = ${money(b.labor)} labor, ${money(b.one)} one-off costs, ${money(b.month)} per month to run. Do not state other money figures; choose only the contingency percentage (0 to 30).
+
+Reply with only a JSON object like:
+{"title":"Project name","summary":"Three or four sentences for the owner: what will be built, the approach and the outcome.","scope_in":["..."],"scope_out":["..."],"solution_design":"Plain Markdown, under 220 words.","architecture":["Component: what it does"],"ux_design":"Plain Markdown, under 180 words.","phases":[{"name":"Discovery and design","start_week":1,"weeks":2,"deliverables":["..."]}],"contingency_pct":15,"assumptions":["..."],"risks":[{"risk":"...","mitigation":"..."}],"changes":"${p.version>1?"Markdown bullet list of what changed since the previous version and why":""}"}
+Phases must cover all the team's work. Weeks are whole numbers and phases may overlap.`}
+function mockupPrompt(p){
+ const pr=p.proposal;
+ return `You are Iris, the UX designer. Draw a sample of the main screen of this project so the owner can see how the result will look.
+
+Project: ${pr.title}
+Summary: ${pr.summary}
+UX design notes: ${pr.ux_design}
+In scope: ${(pr.scope_in||[]).join("; ")}${p.version>1?`\nThe owner asked for these changes: ${p.change}`:""}
+
+Write one self-contained HTML fragment: a <style> block followed by the markup, designed for a desktop screen 1100px wide and about 700px tall. Fill it with realistic names, numbers and text for this project, never lorem ipsum. Use only HTML and CSS: no <script>, no images, no external URLs and no web fonts (use system-ui). Draw any icons or charts with inline SVG. Put every CSS rule under a root element with class "app". Keep it under 300 lines.
+
+Reply with only the HTML.`}
+function chatIntro(p){
+ const b=budget(p),pr=p.proposal;
+ return `You are Atlas, the CEO of a software company whose team is made of AI agents. You are discussing your project proposal with the owner. Answer honestly from the proposal and the team's input, explain trade-offs, and say when something is uncertain. You cannot change the proposal from this chat: when the owner wants changes, summarise them clearly and tell them to use "Send changes to the team". Keep answers under 150 words, in plain language.
+
+Proposal (version ${p.version}):
+${JSON.stringify(pr).slice(0,9000)}
+
+Budget: ${b.hours} h at ${rate} ${currency}/h = ${money(b.labor)}; one-off ${money(b.one)}; contingency ${b.pct}% = ${money(b.contingency)}; total ${money(b.total)}; running cost ${money(b.month)} per month. Timeline: ${totalWeeks(pr)} weeks.
+
+Team input:
+${Object.entries(p.notes||{}).filter(([id])=>A[id]).map(([id,n])=>`- ${A[id].name}: ${String(n.note).slice(0,400)}`).join("\n")}`}
+
+/* cleaning model output */
+function cleanKickoff(k,p){
+ let team=(Array.isArray(k&&k.team)?k.team:[]).map(m=>({id:String(m&&m.id||m||"").toLowerCase().trim(),ask:str(m&&m.ask,400)||"Give your input for the proposal."})).filter(m=>A[m.id]&&m.id!=="atlas");
+ team=team.filter((m,i)=>team.findIndex(x=>x.id===m.id)===i);
+ if(p.version<=1)MIN_FIRST_TEAM.slice().reverse().forEach(id=>{if(!team.some(m=>m.id===id))team.unshift({id,ask:"Give your input for the proposal from your role."})});
+ return{title:str(k&&k.title,80),understanding:str(k&&k.understanding,700)||p.requirement,assumptions:strs(k&&k.assumptions,8),team:team.slice(0,7),redesign:p.version<=1||!!(k&&k.redesign)}}
+function cleanNote(n){
+ return{note:str(n&&n.note,1600)||"(no input)",
+  estimates:(Array.isArray(n&&n.estimates)?n.estimates:[]).map(e=>({item:str(e&&e.item,120),hours:Math.round(num(e&&e.hours,0,2000))})).filter(e=>e.item&&e.hours>0).slice(0,12),
+  costs:(Array.isArray(n&&n.costs)?n.costs:[]).map(c=>({item:str(c&&c.item,120),type:c&&c.type==="monthly"?"monthly":"one_off",amount:Math.round(num(c&&c.amount,0,1e6))})).filter(c=>c.item&&c.amount>0).slice(0,10),
+  risks:strs(n&&n.risks,5),weeks:Math.round(num(n&&n.weeks,0,52)),at:Date.now()}}
+function cleanProposal(x,p){
+ const phases=(Array.isArray(x&&x.phases)?x.phases:[]).map(ph=>({name:str(ph&&ph.name,60)||"Phase",start_week:Math.round(num(ph&&ph.start_week,1,52,1)),weeks:Math.round(num(ph&&ph.weeks,1,52,1)),deliverables:strs(ph&&ph.deliverables,6,140)})).slice(0,8);
+ return{title:str(x&&x.title,90)||p.title,summary:str(x&&x.summary,1200),scope_in:strs(x&&x.scope_in,10),scope_out:strs(x&&x.scope_out,8),
+  solution_design:str(x&&x.solution_design,2500),architecture:strs(x&&x.architecture,10,160),ux_design:str(x&&x.ux_design,2000),
+  phases:phases.length?phases:[{name:"Delivery",start_week:1,weeks:Math.max(1,...Object.values(p.notes||{}).map(n=>n.weeks||1)),deliverables:[]}],
+  contingency_pct:Math.round(num(x&&x.contingency_pct,0,30,15)),assumptions:strs(x&&x.assumptions,8),
+  risks:(Array.isArray(x&&x.risks)?x.risks:[]).map(r=>({risk:str(r&&r.risk,200),mitigation:str(r&&r.mitigation,200)})).filter(r=>r.risk).slice(0,6),
+  changes:p.version>1?str(x&&x.changes,1500):""}}
+function extractHTML(text){const m=String(text).match(/```(?:html)?\s*([\s\S]*?)```/i);const h=(m?m[1]:String(text)).trim();return h.includes("<")?h.slice(0,40000):""}
+function sanitizeHTML(html){
+ const doc=new DOMParser().parseFromString("<body>"+html+"</body>","text/html");
+ doc.querySelectorAll("script,iframe,object,embed,link,meta,base,frame,frameset,noscript,template,portal").forEach(n=>n.remove());
+ doc.querySelectorAll("form").forEach(f=>{const d=doc.createElement("div");d.className=f.className;while(f.firstChild)d.appendChild(f.firstChild);f.replaceWith(d)});
+ const badUrl=/url\(\s*(['"]?)(?!data:image\/)[^)]*\)/gi;
+ doc.querySelectorAll("*").forEach(el=>{[...el.attributes].forEach(a=>{const n=a.name.toLowerCase(),v=a.value.trim();
+  if(n.startsWith("on")||/^(javascript|vbscript):/i.test(v)||(["src","href","xlink:href","action","formaction","srcset","poster","background"].includes(n)&&!/^(#|data:image\/)/i.test(v)))el.removeAttribute(a.name);
+  else if(n==="style")el.setAttribute("style",v.replace(badUrl,"none"))})});
+ doc.querySelectorAll("style").forEach(s=>{s.textContent=s.textContent.replace(/@import[^;]*;?/gi,"").replace(badUrl,"none")});
+ return doc.body.innerHTML}
+
+/* runner */
+async function callJSON(p,agent,prompt,tier){
+ const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};render();
+ return sample.json(prompt,{modelTier:tier||depth(),signal:ctl.signal,cache:false,onText:({text})=>{if(!run||run.ctl!==ctl)return;run.text=text;liveWords(agent,text)}})}
+async function callText(p,agent,prompt){
+ const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};render();
+ const {text}=await sample(prompt,{modelTier:depth()==="quick"?"default":depth(),signal:ctl.signal,cache:false,onText:({text})=>{if(!run||run.ctl!==ctl)return;run.text=text;liveWords(agent,text)}});
+ return text}
+function liveWords(agent,text){const w=Math.round(text.length/5);const el=$("liveOut");if(el)el.textContent=`${A[agent].name} is writing… about ${w} words so far`;const d=$("desk-"+agent);if(d)d.querySelector(".q").textContent=w+"w"}
+
+async function runProposal(p){
+ p.status="running";p.note="";saveProp(p);render();
+ try{
+  if(p.stage==="kickoff"){
+   log(`Atlas is briefing the team on <b>${esc(p.title)}</b>${p.version>1?` (revision ${p.version})`:""}.`);
+   p.kickoff=cleanKickoff(await callJSON(p,"atlas",kickoffPrompt(p),"default"),p);
+   if(p.kickoff.title&&p.version<=1)p.title=p.kickoff.title;
+   p.teamIdx=0;p.stage=p.kickoff.team.length?"team":"synth";saveProp(p);
+   if(p.kickoff.team.length){log(`Atlas asked ${p.kickoff.team.map(m=>A[m.id].name).join(", ")} for input.`);packet("atlas",p.kickoff.team[0].id)}
+  }
+  while(p.stage==="team"){
+   const m=p.kickoff.team[p.teamIdx];
+   p.notes=p.notes||{};p.notes[m.id]=cleanNote(await callJSON(p,m.id,teamPrompt(p,m)));
+   p.teamIdx++;if(p.teamIdx>=p.kickoff.team.length)p.stage="synth";
+   saveProp(p);packet(m.id,p.stage==="team"?p.kickoff.team[p.teamIdx].id:"atlas");run=null;render();
+  }
+  if(p.stage==="synth"){
+   p.proposal=cleanProposal(await callJSON(p,"atlas",synthPrompt(p),depth()==="quick"?"default":depth()),p);
+   p.stage=(p.kickoff.redesign||!p.mockup)?"mockup":"done";saveProp(p);
+   if(p.stage==="mockup")packet("atlas","iris");
+  }
+  if(p.stage==="mockup"){
+   const html=extractHTML(await callText(p,"iris",mockupPrompt(p)));
+   if(html)p.mockup={html,at:Date.now()};else log("Iris couldn't produce a sample screen this time. The rest of the proposal is ready.","err");
+   p.stage="done";saveProp(p);packet("iris","atlas");
+  }
+  p.status="review";saveProp(p);
+  log(`Atlas has ${p.version>1?`revision ${p.version} of `:""}the proposal for <b>${esc(p.title)}</b> ready for your review.`,"gate");
+ }catch(e){
+  p.status="paused";p.note=e&&e.code==="cancelled"?"You stopped this proposal. Resume to continue from the same step.":errCopy(e);
+  if(!(e&&e.code==="cancelled"))log(`${esc(p.title)}: ${esc(p.note)}`,"err");
+  if(e&&(e.code==="not_granted"||e.code==="sampling_disabled")){blocked=true;showBanner(p.note)}
+  saveProp(p);
+ }finally{run=null;render()}}
+
+function newProposal(req){
+ const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ const p={id,title:req.slice(0,80),requirement:req,status:"queued",stage:"kickoff",version:1,kickoff:null,teamIdx:0,notes:{},proposal:null,mockup:null,versions:[],change:"",chat:[],created:Date.now(),note:"",taskId:""};
+ props.set(id,p);selTask=id;saveProp(p);log(`You asked Atlas for a proposal: <b>${esc(req.slice(0,80))}</b>.`);render();pump()}
+
+function proposalContext(p){
+ const pr=p.proposal;
+ const s=`Approved project proposal (follow it):
+Project: ${pr.title}
+Summary: ${pr.summary}
+In scope: ${pr.scope_in.join("; ")}
+Out of scope: ${pr.scope_out.join("; ")}
+Solution design: ${pr.solution_design}
+Architecture: ${pr.architecture.join("; ")}
+UX design: ${pr.ux_design}
+Timeline: ${pr.phases.map(ph=>`${ph.name} (weeks ${ph.start_week}-${ph.start_week+ph.weeks-1})`).join("; ")}`;
+ return s.slice(0,4000)}
+
+function pact(kind,id){
+ const p=props.get(id);if(!p)return;
+ if(kind==="stop"&&run&&run.taskId===id)run.ctl.abort();
+ if(kind==="resume"&&p.status==="paused"){p.status="queued";p.note="";saveProp(p);render();pump()}
+ if(kind==="approve"&&p.status==="review"){
+  const tid=newTask(p.proposal.title||p.title,proposalContext(p),true);
+  p.status="approved";p.taskId=tid;saveProp(p);
+  log(`You approved <b>${esc(p.title)}</b>. Atlas is starting delivery.`,"ship");packet("atlas","nova");selTask=id;render();pump()}
+ if(kind==="changes"&&p.status==="review"){
+  const box=$("chgIn"),inc=$("chgChat"),err=$("chgErr");const text=(box&&box.value||"").trim();
+  const chat=(p.chat||[]).slice(-10).map(m=>`${m.role==="user"?"Owner":"Atlas"}: ${m.content}`).join("\n").slice(0,3000);
+  if(!text&&!(inc&&inc.checked&&chat)){if(err)err.textContent="Write the changes you want, or include your discussion with Atlas.";return}
+  const b=budget(p);
+  p.versions=(p.versions||[]).concat([{version:p.version,proposal:p.proposal,total:b.total,weeks:totalWeeks(p.proposal),month:b.month}]).slice(-3);
+  p.change=(text||"See the discussion below.")+(inc&&inc.checked&&chat?`\n\nFrom the owner's discussion with Atlas:\n${chat}`:"");
+  p.version++;p.stage="kickoff";p.status="queued";p.chat=[];p.note="";
+  saveProp(p);log(`You sent changes on <b>${esc(p.title)}</b>. Atlas is taking them to the team.`,"gate");packet("atlas","nova");render();pump()}
+ if(kind==="decline"&&p.status==="review"){
+  const b=document.querySelector(`[data-pact="decline"][data-id="${id}"]`);
+  if(b&&!b.dataset.armed){b.dataset.armed="1";b.textContent="Click again to decline";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Decline"}},3500);return}
+  p.status="declined";p.note="You declined this proposal.";saveProp(p);log(`You declined <b>${esc(p.title)}</b>.`,"err");render()}
+ if(kind==="remove"){const b=document.querySelector(`[data-pact="remove"][data-id="${id}"]`);
+  if(b&&b.dataset.armed)removeProp(p);else if(b){b.dataset.armed="1";b.textContent="Click again to remove";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Remove"}},3000)}}
+}
+
+async function askAtlas(p,msg){
+ if(chatRun||!sample)return;
+ p.chat=p.chat||[];p.chat.push({role:"user",content:msg});
+ const ctl=new AbortController();chatRun={id:p.id,ctl,text:""};render();
+ try{
+  const turns=[{role:"user",content:chatIntro(p)}].concat(p.chat.slice(-12));
+  const {text}=await sample(turns,{modelTier:"default",signal:ctl.signal,cache:false,onText:({text})=>{chatRun.text=text;const el=$("chatLive");if(el){el.innerHTML=md(text);const c=$("chatLog");if(c)c.scrollTop=c.scrollHeight}}});
+  p.chat.push({role:"assistant",content:text});
+ }catch(e){
+  if(e&&e.code!=="cancelled")p.chat.push({role:"assistant",content:"_"+errCopy(e).replace("this task","this message")+"_"});
+ }finally{chatRun=null;saveProp(p);render()}}
+
+/* proposal rendering */
+function gantt(pr){
+ const W=totalWeeks(pr);const cols=`repeat(${W},minmax(0,1fr))`;
+ const head=`<div class="g-row"><span></span><div class="g-track" style="grid-template-columns:${cols}">${Array.from({length:W},(_,i)=>`<span class="g-week">W${i+1}</span>`).join("")}</div></div>`;
+ return `<div class="tbl-wrap"><div class="gantt">${head}${pr.phases.map(ph=>`<div class="g-row"><span class="g-name" title="${esc(ph.name)}">${esc(ph.name)}</span><div class="g-track" style="grid-template-columns:${cols}"><span class="g-bar" style="grid-column:${ph.start_week}/span ${Math.min(ph.weeks,W-ph.start_week+1)}" title="${esc(ph.deliverables.join(", "))}">${ph.weeks} wk</span></div></div>`).join("")}</div></div>`}
+function budgetTable(b){
+ return `<div class="tbl-wrap"><table class="money"><thead><tr><th>Work</th><th class="n">Hours</th><th class="n">Cost</th></tr></thead><tbody>
+  ${b.rows.map(r=>`<tr><td>${A[r.id].name} · ${A[r.id].role}</td><td class="n">${r.hours}</td><td class="n">${money(r.cost)}</td></tr>`).join("")}
+  ${b.oneOff.map(c=>`<tr><td>${esc(c.item)} <span class="muted">(one-off)</span></td><td class="n">–</td><td class="n">${money(c.amount)}</td></tr>`).join("")}
+  <tr><td>Contingency (${b.pct}%)</td><td class="n">–</td><td class="n">${money(b.contingency)}</td></tr>
+  <tr class="total"><td>Total to build</td><td class="n">${b.hours}</td><td class="n">${money(b.total)}</td></tr></tbody></table></div>
+  ${b.monthly.length?`<div class="tbl-wrap"><table class="money"><thead><tr><th>Running cost after launch</th><th class="n">Per month</th></tr></thead><tbody>${b.monthly.map(c=>`<tr><td>${esc(c.item)}</td><td class="n">${money(c.amount)}</td></tr>`).join("")}<tr class="total"><td>Total per month</td><td class="n">${money(b.month)}</td></tr></tbody></table></div>`:""}`}
+function pTrail(p){
+ const steps=[{k:"kickoff",l:"Atlas briefs the team"}].concat((p.kickoff?p.kickoff.team:[]).map((m,i)=>({k:"team"+i,l:A[m.id].name}))).concat([{k:"synth",l:"Atlas writes the proposal"},{k:"mockup",l:"Iris draws the sample"},{k:"review",l:"Your review"}]);
+ const order=s=>s==="kickoff"?0:s==="team"?1+p.teamIdx:s==="synth"?1+(p.kickoff?p.kickoff.team.length:0):s==="mockup"?2+(p.kickoff?p.kickoff.team.length:0):99;
+ const cur=p.status==="review"||p.status==="approved"||p.status==="declined"?99:order(p.stage);
+ return `<div class="ptrail">${steps.map((s,i)=>`<span class="${i<cur?"done":i===cur?"now":""}">${s.l}</span>`).join("")}</div>`}
+function renderProposal(p){
+ const ws=$("ws");const running=run&&run.taskId===p.id;const pr=p.proposal;
+ let actions="";
+ if(running)actions+=`<button class="btn danger" data-pact="stop" data-id="${p.id}">Stop</button>`;
+ if(p.status==="paused")actions+=`<button class="btn primary" data-pact="resume" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Resume</button>`;
+ if(!running)actions+=`<button class="btn" data-pact="remove" data-id="${p.id}">Remove</button>`;
+ const b=pr?budget(p):null;
+ let h=`<div class="ws-head"><div style="min-width:0"><div class="eyebrow">Project proposal · version ${p.version}</div><h2 style="margin-top:6px">${esc(pr?pr.title:p.title)}</h2>
+  <div class="ws-meta"><span class="pill ${p.status}">${PSTATUS[p.status]}</span>${b?`<span class="pill">${money(b.total)}</span><span class="pill">${totalWeeks(pr)} weeks</span>`:""}</div></div><div class="ws-actions">${actions}</div></div>`;
+ if(p.note)h+=`<p class="ws-note ${p.status==="paused"||p.status==="declined"?"err":""}">${esc(p.note)}</p>`;
+ if(!["review","approved","declined"].includes(p.status)){
+  h+=`<div class="progress-box">${p.version>1?`<p class="ws-note">Atlas took your changes back to the team. Revision ${p.version} is in progress.</p>`:""}${pTrail(p)}
+   ${running?`<div class="out live" id="liveOut">${esc(run.text?`${A[run.agent].name} is writing… about ${Math.round(run.text.length/5)} words so far`:`${A[run.agent].name} is thinking…`)}</div>`:""}</div>`;
+ }
+ h+=`<div class="prop">`;
+ if(pr&&p.status!=="review"&&!["approved","declined"].includes(p.status))h+=`<p class="eyebrow">Version ${p.version-1}, shown until the revision is ready</p>`;
+ if(p.status==="approved"&&p.taskId)h+=`<div class="okbox">Approved. The team is delivering this project. <button type="button" class="linkbtn" data-open="${p.taskId}">Open the delivery task</button></div>`;
+ if(pr){
+  if(pr.changes)h+=`<section class="changes"><h3>What changed in version ${p.version}</h3><div class="out flat">${md(pr.changes)}</div></section>`;
+  h+=`<section><p class="lead-p">${esc(pr.summary)}</p>
+   <div class="stats"><div><b>${money(b.total)}</b><span>To build, incl. ${b.pct}% contingency</span></div><div><b>${totalWeeks(pr)} weeks</b><span>${pr.phases.length} phases</span></div><div><b>${b.month?money(b.month):"–"}</b><span>Running cost per month</span></div></div></section>`;
+  h+=`<section><h3>Sample design</h3>${p.mockup?`<div class="mock-frame"><div class="mock-bar"><i></i><i></i><i></i><span>Sample screen by Iris · not the final product</span></div><div class="mock-host" data-pid="${p.id}"></div></div>`:`<p class="empty">${p.stage==="mockup"?"Iris is drawing the sample screen…":"No sample screen for this version."}</p>`}</section>`;
+  h+=`<section><h3>Design</h3><div class="cols2"><div><div class="eyebrow">Solution</div><div class="out flat">${md(pr.solution_design)}</div></div><div><div class="eyebrow">User experience</div><div class="out flat">${md(pr.ux_design)}</div></div></div>
+   ${pr.architecture.length?`<div class="chips">${pr.architecture.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>`:""}</section>`;
+  h+=`<section><h3>Timeline</h3>${gantt(pr)}<ul class="phase-list">${pr.phases.map(ph=>`<li><b>${esc(ph.name)}</b> · ${ph.weeks===1?`week ${ph.start_week}`:`weeks ${ph.start_week}–${ph.start_week+ph.weeks-1}`}${ph.deliverables.length?`: ${ph.deliverables.map(esc).join(", ")}`:""}</li>`).join("")}</ul></section>`;
+  h+=`<section><h3>Budget</h3>${budgetTable(b)}<p class="note-s">Built from the team's own hour estimates at ${money(rate)} per hour, which you can change under Company context. These are AI estimates: check them before quoting a client.</p></section>`;
+  h+=`<section><h3>Scope</h3><div class="cols2"><div><div class="eyebrow">Included</div><ul>${pr.scope_in.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><div><div class="eyebrow">Not included</div><ul>${pr.scope_out.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>Nothing listed</li>"}</ul></div></div></section>`;
+  if(pr.risks.length||pr.assumptions.length)h+=`<section><h3>Risks and assumptions</h3><ul>${pr.risks.map(r=>`<li><b>${esc(r.risk)}</b>${r.mitigation?` · ${esc(r.mitigation)}`:""}</li>`).join("")}${pr.assumptions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`;
+ }
+ const noteIds=Object.keys(p.notes||{}).filter(id=>A[id]);
+ if(noteIds.length)h+=`<section><h3>Team discussion</h3><div class="notes">${noteIds.map(id=>{const n=p.notes[id],hrs=(n.estimates||[]).reduce((s,e)=>s+e.hours,0);
+  return `<details class="note"><summary><span class="av">${ini(A[id].name)}</span><span><b>${A[id].name}</b> · ${A[id].role} · ${hrs} h${n.weeks?` · ${n.weeks} wk`:""}</span></summary><div class="out flat">${md(n.note)}</div>
+   ${n.estimates.length?`<ul class="est">${n.estimates.map(e=>`<li>${esc(e.item)} <span>${e.hours} h</span></li>`).join("")}</ul>`:""}${n.risks.length?`<p class="note-s">Risks: ${n.risks.map(esc).join("; ")}</p>`:""}</details>`}).join("")}</div></section>`;
+ if(p.versions&&p.versions.length)h+=`<section><h3>Earlier versions</h3><ul>${p.versions.map(v=>`<li>Version ${v.version}: ${money(v.total)}, ${v.weeks} weeks${v.month?`, ${money(v.month)}/month`:""}</li>`).join("")}</ul></section>`;
+ if(p.status==="review"){
+  const chatting=chatRun&&chatRun.id===p.id;
+  h+=`<section class="decide"><h3>Your decision</h3>
+   <div class="eyebrow">Discuss with Atlas</div>
+   <div class="chat" id="chatLog">${(p.chat||[]).map(m=>`<div class="msg ${m.role}">${m.role==="assistant"?md(m.content):esc(m.content)}</div>`).join("")||`<p class="empty">Ask Atlas anything about the proposal: why it costs what it does, what you could cut, or how a change would affect the timeline.</p>`}${chatting?`<div class="msg assistant" id="chatLive">${chatRun.text?md(chatRun.text):"Atlas is thinking…"}</div>`:""}</div>
+   <form class="chat-form" id="chatForm" data-id="${p.id}"><input id="chatIn" placeholder="Ask Atlas a question" autocomplete="off" maxlength="800" ${chatting||!live?"disabled":""}><button class="btn" type="submit" ${chatting||!live?"disabled":""}>Ask</button></form>
+   <label class="eyebrow" for="chgIn" style="margin-top:6px">Changes you want</label>
+   <textarea id="chgIn" placeholder="e.g. Keep the budget under $40,000, drop the mobile app for now and add a reporting page."></textarea>
+   <label class="chk"><input type="checkbox" id="chgChat" checked> Include my discussion with Atlas</label>
+   <span class="field-err" id="chgErr"></span>
+   <div class="ws-actions"><button class="btn gate" data-pact="approve" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Approve and start delivery</button><button class="btn" data-pact="changes" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Send changes to the team</button><button class="btn danger" data-pact="decline" data-id="${p.id}">Decline</button></div></section>`;
+ }
+ h+=`</div>`;
+ const keep={};["chatIn","chgIn"].forEach(k=>{const el=$(k);if(el)keep[k]={v:el.value,f:document.activeElement===el}});const cc=$("chgChat");if(cc)keep.chgChat=cc.checked;
+ ws.innerHTML=h;
+ Object.entries(keep).forEach(([k,v])=>{const el=$(k);if(!el)return;if(k==="chgChat")el.checked=v;else{el.value=v.v;if(v.f)el.focus()}});
+ const cl=$("chatLog");if(cl)cl.scrollTop=cl.scrollHeight;
+ mountMockups()}
+const safeCache=new Map();
+function mountMockups(){
+ document.querySelectorAll(".mock-host[data-pid]").forEach(host=>{
+  const p=props.get(host.dataset.pid);if(!p||!p.mockup)return;
+  const key=p.id+":"+p.mockup.at;let safe=safeCache.get(key);if(safe===undefined){safe=sanitizeHTML(p.mockup.html);safeCache.set(key,safe)}
+  const root=host.attachShadow({mode:"open"});
+  root.innerHTML=`<style>:host{all:initial;display:block}.scale{width:1100px;transform-origin:0 0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#15202b;background:#ffffff}</style><div class="scale">${safe}</div>`;
+  const inner=root.querySelector(".scale");
+  const fit=()=>{const s=Math.min(1,host.clientWidth/1100)||1;inner.style.transform=`scale(${s})`;host.style.height=Math.ceil(inner.scrollHeight*s)+"px"};
+  fit();requestAnimationFrame(fit);new ResizeObserver(fit).observe(host)})}
+
 /* ---------- render ---------- */
 const STATUS={queued:"Queued",running:"Running",approval:"Needs approval",paused:"Paused",shipped:"Shipped",rejected:"Rejected"};
 function list(){return[...tasks.values()].sort((a,b)=>b.created-a.created)}
+function workList(){return[...tasks.values(),...props.values()].sort((a,b)=>b.created-a.created)}
 function lastWork(agentId){
  let best=null;tasks.forEach(t=>t.outputs.forEach(o=>{if(o&&o.agent===agentId&&(!best||o.at>best.o.at))best={t,o}}));return best}
 
@@ -545,30 +959,39 @@ function render(){
  const gated=all.filter(t=>t.status==="approval");
  AGENTS.forEach(a=>{
   const d=$("desk-"+a.id);let st="idle",txt="Free for work";
-  if(run&&run.agent===a.id){st="working";txt=(a.id==="atlas"?"Planning ":"Working on ")+(tasks.get(run.taskId)?.title||"")}
+  if(run&&run.agent===a.id){st="working";txt=(isProp(run.taskId)?(a.id==="atlas"?"Preparing proposal: ":"Giving input on "):(a.id==="atlas"?"Planning ":"Working on "))+(item(run.taskId)?.title||"")}
   else if(a.id==="relay"&&gated.length){st="approval";txt="Awaiting your OK: "+gated[0].title}
+  else if(a.id==="atlas"&&[...props.values()].some(p=>p.status==="review")){st="approval";txt="Proposal waiting for your review"}
   else{const w=lastWork(a.id);if(w)txt="Last: "+w.t.title}
   d.dataset.st=st;d.querySelector(".dtask").textContent=txt;d.classList.toggle("sel",selAgent===a.id);
   if(st!=="working")d.querySelector(".q").textContent="";
  });
- $("kOpen").textContent=all.filter(t=>!["shipped","rejected"].includes(t.status)).length;
- $("kGate").textContent=gated.length;
+ const plist=[...props.values()];
+ $("kOpen").textContent=all.filter(t=>!["shipped","rejected"].includes(t.status)).length+plist.filter(p=>!["approved","declined"].includes(p.status)).length;
+ $("kGate").textContent=gated.length+plist.filter(p=>p.status==="review").length;
  $("kShip").textContent=all.filter(t=>t.status==="shipped").length;
  $("kSteps").textContent=all.reduce((n,t)=>n+t.outputs.filter(Boolean).length,0);
- $("taskCount").textContent=all.length?all.length+" total":"";
- $("tasks").innerHTML=all.length?all.map(t=>{
+ const work=workList();
+ $("taskCount").textContent=work.length?work.length+" total":"";
+ $("tasks").innerHTML=work.length?work.map(t=>{
+  if(isProp(t.id)){const p=t,pr=p.proposal,b=pr?budget(p):null;
+   const where=p.status==="running"&&run&&run.taskId===p.id?`${A[run.agent].name} is working`:p.status==="review"?`Version ${p.version} · ${money(b.total)} · ${totalWeeks(pr)} weeks`:PSTATUS[p.status];
+   return `<button type="button" class="t ${p.status==="review"?"review":""} ${selTask===p.id?"sel":""}" data-open="${p.id}">
+    <span class="t-head"><b>${esc(pr?pr.title:p.title)}</b><span class="pill ${p.status}">${PSTATUS[p.status]}</span></span>
+    <span class="t-meta"><span class="pill kindp">Proposal</span> ${esc(where)}</span></button>`}
   const cur=t.team[t.idx];
   const where=t.status==="running"&&cur?A[cur].name+" is working":t.status==="queued"&&cur?"Next: "+A[cur].name:STATUS[t.status];
   return `<button type="button" class="t ${t.status==="approval"?"approval":""} ${selTask===t.id?"sel":""}" data-open="${t.id}">
    <span class="t-head"><b>${esc(t.title)}</b><span class="pill ${t.status}">${STATUS[t.status]}</span></span>
    <span class="trail">${t.team.map((s,i)=>`<i class="${i<t.idx?"done":i===t.idx&&t.status!=="shipped"?"now":""}"></i>`).join("")}</span>
    <span class="t-meta">${t.kind?esc(t.kind)+" · "+esc(t.priority)+" · ":""}${esc(where)}</span></button>`}).join("")
-  :`<p class="empty">No tasks yet. Assign one above and Atlas will build a team for it.</p>`;
+  :`<p class="empty">Nothing yet. Tell Atlas your requirement above and the team will come back with a proposal.</p>`;
  renderWS();renderInsp()}
 
 function renderWS(){
- const ws=$("ws");const t=selTask&&tasks.get(selTask);
- if(!t){ws.innerHTML=`<h2 style="font-size:19px;margin-bottom:6px">Task workspace</h2><p class="empty">Every deliverable an agent writes shows up here as it is written: Nova's spec, Forge's design, Byte's code, Lens's review and the rest. Assign a task or pick one from the list to open it.</p>`;return}
+ const ws=$("ws");if(selTask&&isProp(selTask)&&props.get(selTask))return renderProposal(props.get(selTask));
+ const t=selTask&&tasks.get(selTask);
+ if(!t){ws.innerHTML=`<h2 style="font-size:19px;margin-bottom:6px">Workspace</h2><p class="empty">Proposals and delivery work open here. A proposal shows the budget, design, timeline and Iris's sample screen, with a place to discuss it with Atlas and approve it or send changes. A delivery task shows every deliverable as the agents write it.</p>`;return}
  const running=run&&run.taskId===t.id;
  let actions="";
  if(running)actions+=`<button class="btn danger" data-act="stop" data-id="${t.id}">Stop</button>`;
@@ -612,17 +1035,28 @@ function renderInsp(){
 document.addEventListener("click",async e=>{
  const o=e.target.closest("[data-open]");if(o){selTask=o.dataset.open;render();$("ws").scrollIntoView({behavior:"smooth",block:"start"});return}
  const b=e.target.closest("[data-act]");if(b){act(b.dataset.act,b.dataset.id);return}
+ const pb=e.target.closest("[data-pact]");if(pb){pact(pb.dataset.pact,pb.dataset.id);return}
  const c=e.target.closest("[data-copy]");if(c){const t=tasks.get(selTask);const out=t&&t.outputs[+c.dataset.copy];if(!out)return;
   try{await navigator.clipboard.writeText(out.text);c.textContent="Copied"}catch(_){const pre=c.closest(".step").querySelector(".out");const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);c.textContent="Selected, press Ctrl+C"}
   setTimeout(()=>{c.textContent="Copy"},1800)}});
-$("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";newTask(v)});
-$("samples").innerHTML=SAMPLES.map(s=>`<button type="button">${s}</button>`).join("");
+$("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";if(mode==="proposal")newProposal(v);else newTask(v)});
+document.addEventListener("submit",e=>{const f=e.target.closest("#chatForm");if(!f)return;e.preventDefault();const p=props.get(f.dataset.id),inp=$("chatIn");const v=(inp&&inp.value||"").trim();if(!p||!v||chatRun)return;inp.value="";askAtlas(p,v)});
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="chgIn"){const er=$("chgErr");if(er)er.textContent=""}});
+function setMode(m){mode=m;$("modeP").setAttribute("aria-pressed",String(m==="proposal"));$("modeT").setAttribute("aria-pressed",String(m!=="proposal"));
+ $("assignBtn").textContent=m==="proposal"?"Ask for a proposal":"Assign task";
+ $("taskInput").placeholder=m==="proposal"?"e.g. A customer portal where our clients can log in with Okta and download their reports":"e.g. Add SSO login with Okta to the customer portal";
+ $("leadText").textContent=m==="proposal"?"Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.":"Hand a task straight to delivery. Atlas picks the team, Lens reviews the code, and nothing is released until you approve it.";
+ $("samples").innerHTML=(m==="proposal"?PROPOSAL_SAMPLES:SAMPLES).map(s=>`<button type="button">${s}</button>`).join("")}
+$("modeP").addEventListener("click",()=>setMode("proposal"));$("modeT").addEventListener("click",()=>setMode("task"));
+setMode("proposal");
 $("samples").addEventListener("click",e=>{const b=e.target.closest("button");if(b){$("taskInput").value=b.textContent;$("taskInput").focus()}});
 $("company").value=DEFAULT_CTX;
 $("saveCtx").addEventListener("click",async()=>{
  company=$("company").value.trim()||DEFAULT_CTX;
+ rate=num($("rateIn").value,1,2000,85);$("rateIn").value=rate;
+ const cur=$("curIn").value.trim().toUpperCase();currency=/^[A-Z]{3}$/.test(cur)?cur:"USD";$("curIn").value=currency;render();
  if(!db){$("ctxMsg").textContent="Used for this visit only.";return}
- try{await db.doc("settings/company").set({profile:company});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
+ try{await db.doc("settings/company").set({profile:company,rate,currency});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
 
 function renderFiles(){
  $("flist").innerHTML=codeFiles.map(f=>`<span class="chip">${esc(f.path)}</span>`).join("");
@@ -657,7 +1091,20 @@ render();
  if(!db){log("Tasks won't be saved in this view. They last until you leave the page.","err")}
  else{
   db.doc("settings/codebase").get().then(sn=>{if(sn.exists&&Array.isArray(sn.data().files)){codeFiles=sn.data().files.filter(f=>f&&f.path&&typeof f.text==="string");renderFiles()}}).catch(()=>{});
-  db.doc("settings/company").get().then(sn=>{if(sn.exists&&sn.data().profile){company=sn.data().profile;$("company").value=company}}).catch(()=>{});
+  db.doc("settings/company").get().then(sn=>{if(!sn.exists)return;const d=sn.data();if(d.profile){company=d.profile;$("company").value=company}
+   if(d.rate){rate=num(d.rate,1,2000,85);$("rateIn").value=rate}if(/^[A-Z]{3}$/.test(d.currency||"")){currency=d.currency;$("curIn").value=currency}render()}).catch(()=>{});
+  db.collection("proposals").orderBy("created","desc").limit(30).onSnapshot(snap=>{
+   snap.docChanges().forEach(ch=>{const id=ch.doc.id;
+    if(run&&run.taskId===id)return;
+    if(ch.type==="removed"){props.delete(id);return}
+    const local=props.get(id);if(local&&(local.status==="running"||local.status==="queued"))return;
+    if(chatRun&&chatRun.id===id)return;
+    const p=Object.assign({id},JSON.parse(JSON.stringify(ch.doc.data())));
+    p.notes=p.notes||{};p.versions=p.versions||[];p.chat=p.chat||[];
+    if(p.status==="running"||p.status==="queued"){p.status="paused";p.note="This proposal was interrupted when the page closed. Resume to continue."}
+    props.set(id,p)});
+   if(!selTask){const l=workList();if(l.length)selTask=l[0].id}
+   render()},()=>log("Saved proposals couldn't be loaded in this view.","err"));
   let first=true;const timer=setTimeout(()=>log("Saved tasks are taking a while to load.","err"),10000);
   db.collection("tasks").orderBy("created","desc").limit(40).onSnapshot(snap=>{
    if(!snap.metadata.fromCache)clearTimeout(timer);
@@ -672,7 +1119,7 @@ render();
     t.outputs=t.outputs||[];
     if(t.status==="running"||t.status==="queued"){t.status="paused";t.note="This task was interrupted when the page closed. Resume to continue."}
     tasks.set(id,t)});
-   if(first&&!selTask){const l=list();if(l.length)selTask=l[0].id;first=false}
+   if(first&&!selTask){const l=workList();if(l.length)selTask=l[0].id;first=false}
    render()},err=>{clearTimeout(timer);log("Saved tasks couldn't be loaded in this view.","err")});
  }
  log(live?"Office open. Agents are ready for work.":"Office open in read-only mode.");

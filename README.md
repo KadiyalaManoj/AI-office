@@ -11,6 +11,22 @@ An AI agent office for a software company: thirteen agents, each with one job, p
 | Cloud ops center | **Terra**, Terraform on AWS · **Relay**, CI/CD release · **Pulse**, SRE |
 | Customer desk | **Echo**, support · **Quill**, marketing and sales |
 
+## How a proposal flows
+
+In the browser office, start with **Proposal** (the default):
+
+1. You tell Atlas your requirement.
+2. Atlas briefs the team and picks who should give input. A first proposal always includes Nova, Iris and Forge.
+3. Each agent gives a recommendation from their role, with hour estimates, costs to buy or run, and risks.
+4. Atlas writes the proposal: summary, scope, solution and UX design, architecture, phased timeline, risks and assumptions. Iris draws a sample of the main screen.
+5. **The budget is calculated by the office, not invented by the AI.** It's the team's hours × your hourly rate, plus one-off costs and Atlas's contingency (0–30%). Monthly running costs are listed separately. Set your rate and currency under Company context.
+6. You review it, discuss it with Atlas in a chat, and then choose one:
+   - **Approve and start delivery** creates a delivery task that carries the approved proposal into the flow below.
+   - **Send changes to the team** sends your changes, with your discussion if you like, back to Atlas. Atlas takes them to the agents they affect, and a new version comes back showing what changed. Earlier versions stay listed.
+   - **Decline**.
+
+The sample screen is sanitized before display: scripts, event handlers and external links or images are removed.
+
 ## How a task flows
 
 1. Atlas reads the request, picks a type (feature, bug, infra or growth) and proposes a team.
