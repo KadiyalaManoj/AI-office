@@ -1,3 +1,4 @@
+
 <title>Agent Office Floor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,6 +279,14 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
 .decide textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:13.5px/1.45 var(--body);resize:vertical}
 .chk{display:flex;gap:8px;align-items:center;font-size:13px}
 .field-err{color:var(--bad);font-size:13px;min-height:1em}
+.pill.working,.pill.pushing,.pill.approved{border-color:var(--ok);color:var(--ok)}
+.pill.done{background:var(--ok-soft);border-color:var(--ok-soft);color:var(--ok)}
+.pill.failed,.pill.changes{border-color:var(--bad);color:var(--bad)}
+.pill.kindb{background:var(--gate-soft);border-color:var(--gate-soft);color:var(--gate)}
+.runbox{display:grid;gap:6px;border:1px solid var(--ok);background:var(--ok-soft);border-radius:10px;padding:12px 14px;font-size:14px}
+.runbox a{color:var(--ok);font-weight:600}
+.runbox code{font:12.5px var(--mono);background:var(--surface);padding:2px 6px;border-radius:4px;overflow-wrap:anywhere}
+.blog{display:grid;gap:0;border-left:2px solid var(--line);margin-left:16px}
 @media (prefers-reduced-motion:reduce){.packet{display:none}.desk[data-st="working"] .av{animation:none}.desk[data-st="working"] .bar::after{animation:none;width:100%;left:0}}
 </style>
 
@@ -295,7 +304,7 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
 
   <form class="assign" id="assign">
     <label class="lead" for="taskInput" id="leadText">Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.</label>
-    <span class="mode" role="group" aria-label="What to ask for"><button type="button" id="modeP" aria-pressed="true">Proposal</button><button type="button" id="modeT" aria-pressed="false">Delivery task</button></span>
+    <span class="mode" role="group" aria-label="What to ask for"><button type="button" id="modeP" aria-pressed="true">Proposal</button><button type="button" id="modeT" aria-pressed="false">Delivery task</button><button type="button" id="modeB" aria-pressed="false">Build on my computer</button></span>
     <input id="taskInput" placeholder="e.g. A customer portal where our clients can log in with Okta and download their reports" autocomplete="off" maxlength="600">
     <select id="depth" title="How hard the agents think">
       <option value="quick">Fast drafts</option>
@@ -332,7 +341,7 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
           <span class="viewtools" id="viewTools"><button class="btn" type="button" id="vTop">Top view</button><button class="btn" type="button" id="vReset">Reset view</button></span></div>
         <div class="stage3d" id="stage3d" hidden><div class="tip3d" hidden></div><span class="hint3d">Drag to orbit · scroll to zoom · select a person</span>
           <div class="inbox3d" id="inbox3d" hidden></div>
-          <form class="ask3d" id="ask3d"><span class="mode" role="group" aria-label="What to ask for"><button type="button" id="m3P" aria-pressed="true">Proposal</button><button type="button" id="m3T" aria-pressed="false">Delivery task</button></span>
+          <form class="ask3d" id="ask3d"><span class="mode" role="group" aria-label="What to ask for"><button type="button" id="m3P" aria-pressed="true">Proposal</button><button type="button" id="m3T" aria-pressed="false">Delivery task</button><button type="button" id="m3B" aria-pressed="false">Build</button></span>
             <label for="ask3dIn" class="sr">Tell Atlas what you need</label><input id="ask3dIn" placeholder="Tell Atlas what you need…" autocomplete="off" maxlength="600"><button class="btn primary" type="submit" id="ask3dBtn">Send to Atlas</button>
             <span class="field-err" id="ask3dErr"></span></form></div>
         <div class="floor" id="floor"></div>
@@ -649,10 +658,11 @@ function act(kind,id){
 }
 
 /* ---------- proposals ---------- */
-const props=new Map();
+const props=new Map(),builds=new Map();
+const isBuild=id=>String(id||"").startsWith("b");
 let rate=85,currency="USD",mode="proposal",chatRun=null;
 const isProp=id=>String(id||"").startsWith("p");
-const item=id=>tasks.get(id)||props.get(id);
+const item=id=>tasks.get(id)||props.get(id)||builds.get(id);
 const PROPOSAL_SAMPLES=["Customer portal with Okta SSO for our clients","Mobile app for field technicians to log jobs","Migrate our billing system to AWS EKS","Analytics dashboard for clinic managers"];
 const PSTATUS={queued:"Queued",running:"Team is working",review:"Ready for your review",paused:"Paused",approved:"Approved",declined:"Declined"};
 const MIN_FIRST_TEAM=["nova","iris","forge"];
@@ -994,7 +1004,7 @@ function mountMockups(){
 /* ---------- render ---------- */
 const STATUS={queued:"Queued",running:"Running",approval:"Needs approval",paused:"Paused",shipped:"Shipped",rejected:"Rejected"};
 function list(){return[...tasks.values()].sort((a,b)=>b.created-a.created)}
-function workList(){return[...tasks.values(),...props.values()].sort((a,b)=>b.created-a.created)}
+function workList(){return[...tasks.values(),...props.values(),...builds.values()].sort((a,b)=>(b.created||0)-(a.created||0))}
 function lastWork(agentId){
  let best=null;tasks.forEach(t=>t.outputs.forEach(o=>{if(o&&o.agent===agentId&&(!best||o.at>best.o.at))best={t,o}}));return best}
 
@@ -1002,8 +1012,9 @@ function render(){
  const all=list();
  const gated=all.filter(t=>t.status==="approval");
  AGENTS.forEach(a=>{
-  const d=$("desk-"+a.id);let st="idle",txt="Free for work";
-  if(run&&run.agent===a.id){st="working";txt=(isProp(run.taskId)?(a.id==="atlas"?"Preparing proposal: ":"Giving input on "):(a.id==="atlas"?"Planning ":"Working on "))+(item(run.taskId)?.title||"")}
+  const d=$("desk-"+a.id);let st="idle",txt="Free for work",wb;
+  if((wb=[...builds.values()].find(b=>(b.status==="working"||b.status==="pushing")&&b.stage===a.id))){st="working";txt="On your computer: "+wb.title}
+  else if(run&&run.agent===a.id){st="working";txt=(isProp(run.taskId)?(a.id==="atlas"?"Preparing proposal: ":"Giving input on "):(a.id==="atlas"?"Planning ":"Working on "))+(item(run.taskId)?.title||"")}
   else if(a.id==="relay"&&gated.length){st="approval";txt="Awaiting your OK: "+gated[0].title}
   else if(a.id==="atlas"&&[...props.values()].some(p=>p.status==="review")){st="approval";txt="Proposal waiting for your review"}
   else{const w=lastWork(a.id);if(w)txt="Last: "+w.t.title}
@@ -1011,13 +1022,18 @@ function render(){
   if(st!=="working")d.querySelector(".q").textContent="";
  });
  const plist=[...props.values()];
- $("kOpen").textContent=all.filter(t=>!["shipped","rejected"].includes(t.status)).length+plist.filter(p=>!["approved","declined"].includes(p.status)).length;
- $("kGate").textContent=gated.length+plist.filter(p=>p.status==="review").length;
- $("kShip").textContent=all.filter(t=>t.status==="shipped").length;
+ const blist=[...builds.values()];
+ $("kOpen").textContent=all.filter(t=>!["shipped","rejected"].includes(t.status)).length+plist.filter(p=>!["approved","declined"].includes(p.status)).length+blist.filter(b=>!["done","failed"].includes(b.status)).length;
+ $("kGate").textContent=gated.length+plist.filter(p=>p.status==="review").length+blist.filter(b=>b.status==="review").length;
+ $("kShip").textContent=all.filter(t=>t.status==="shipped").length+blist.filter(b=>b.status==="done").length;
  $("kSteps").textContent=all.reduce((n,t)=>n+t.outputs.filter(Boolean).length,0);
  const work=workList();
  $("taskCount").textContent=work.length?work.length+" total":"";
  $("tasks").innerHTML=work.length?work.map(t=>{
+  if(isBuild(t.id)){const b=t;const where=(b.status==="working"||b.status==="pushing")&&A[b.stage]?`${A[b.stage].name} is working on your computer`:BSTATUS[b.status]||b.status;
+   return `<button type="button" class="t ${b.status==="review"?"review":""} ${selTask===b.id?"sel":""}" data-open="${b.id}">
+    <span class="t-head"><b>${esc(b.title)}</b><span class="pill ${esc(b.status)}">${esc(BSTATUS[b.status]||b.status)}</span></span>
+    <span class="t-meta"><span class="pill kindb">Build</span> ${esc(where)}</span></button>`}
   if(isProp(t.id)){const p=t,pr=p.proposal,b=pr?budget(p):null;
    const where=p.status==="running"&&run&&run.taskId===p.id?`${A[run.agent].name} is working`:p.status==="review"?`Version ${p.version} · ${money(b.total)} · ${totalWeeks(pr)} weeks`:PSTATUS[p.status];
    return `<button type="button" class="t ${p.status==="review"?"review":""} ${selTask===p.id?"sel":""}" data-open="${p.id}">
@@ -1033,11 +1049,13 @@ function render(){
  renderWS();renderInsp();renderInbox3d()}
 function renderInbox3d(){const box=$("inbox3d");if(!box)return;
  const items=[...props.values()].filter(p=>p.status==="review").map(p=>({id:p.id,t:`Proposal ready: ${p.proposal?p.proposal.title:p.title}`,s:p.proposal?money(budget(p).total):""}))
-  .concat([...tasks.values()].filter(t=>t.status==="approval").map(t=>({id:t.id,t:`Approve release: ${t.title}`,s:"Relay is waiting"})));
+  .concat([...tasks.values()].filter(t=>t.status==="approval").map(t=>({id:t.id,t:`Approve release: ${t.title}`,s:"Relay is waiting"})))
+  .concat([...builds.values()].filter(b=>b.status==="review").map(b=>({id:b.id,t:`Build ready: ${b.title}`,s:"Try it on localhost"})));
  box.hidden=!items.length;box.innerHTML=items.length?`<div class="eyebrow">Waiting for you</div>`+items.slice(0,4).map(i=>`<button type="button" data-open="${i.id}">${esc(i.t)}<span>${esc(i.s)}</span></button>`).join(""):""}
 
 function renderWS(){
- const ws=$("ws");if(selTask&&isProp(selTask)&&props.get(selTask))return renderProposal(props.get(selTask));
+ const ws=$("ws");if(selTask&&isBuild(selTask)&&builds.get(selTask))return renderBuild(builds.get(selTask));
+ if(selTask&&isProp(selTask)&&props.get(selTask))return renderProposal(props.get(selTask));
  const t=selTask&&tasks.get(selTask);
  if(!t){ws.innerHTML=`<h2 style="font-size:19px;margin-bottom:6px">Workspace</h2><p class="empty">Proposals and delivery work open here. A proposal shows the budget, design, timeline and Iris's sample screen, with a place to discuss it with Atlas and approve it or send changes. A delivery task shows every deliverable as the agents write it.</p>`;return}
  const running=run&&run.taskId===t.id;
@@ -1089,7 +1107,8 @@ document.addEventListener("click",async e=>{
  const c=e.target.closest("[data-copy]");if(c){const t=tasks.get(selTask);const out=t&&t.outputs[+c.dataset.copy];if(!out)return;
   try{await navigator.clipboard.writeText(out.text);c.textContent="Copied"}catch(_){const pre=c.closest(".step").querySelector(".out");const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);c.textContent="Selected, press Ctrl+C"}
   setTimeout(()=>{c.textContent="Copy"},1800)}});
-$("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";if(mode==="proposal")newProposal(v);else newTask(v)});
+$("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";startWork(v)});
+function startWork(v){if(mode==="proposal")newProposal(v);else if(mode==="build")newBuild(v);else newTask(v)}
 document.addEventListener("submit",e=>{const f=e.target.closest("#chatForm");if(!f)return;e.preventDefault();const p=props.get(f.dataset.id),inp=$("chatIn");const v=(inp&&inp.value||"").trim();if(!p||!v||chatRun)return;inp.value="";askAtlas(p,v)});
 document.addEventListener("input",e=>{if(e.target&&e.target.id==="chgIn"){const er=$("chgErr");if(er)er.textContent=""}});
 $("ask3d").addEventListener("submit",e=>{e.preventDefault();const v=$("ask3dIn").value.trim(),err=$("ask3dErr");
@@ -1097,16 +1116,18 @@ $("ask3d").addEventListener("submit",e=>{e.preventDefault();const v=$("ask3dIn")
  if(!live||blocked){err.textContent="The agents are offline here. Open the page on claude.ai while signed in.";return}
  err.textContent="";$("ask3dIn").value="";
  Office3D.handoff("you","atlas",excerpt(v,110),mode==="proposal"?"Got it. I'll get the team together and come back with a proposal.":"Got it. I'll get the team on it.");
- if(mode==="proposal")newProposal(v);else newTask(v)});
+ startWork(v)});
 $("ask3dIn").addEventListener("input",()=>{$("ask3dErr").textContent=""});
-$("m3P").addEventListener("click",()=>setMode("proposal"));$("m3T").addEventListener("click",()=>setMode("task"));
-function setMode(m){mode=m;$("modeP").setAttribute("aria-pressed",String(m==="proposal"));$("modeT").setAttribute("aria-pressed",String(m!=="proposal"));
- $("m3P").setAttribute("aria-pressed",String(m==="proposal"));$("m3T").setAttribute("aria-pressed",String(m!=="proposal"));$("ask3dIn").placeholder=m==="proposal"?"Tell Atlas what you need…":"Give the team a task…";
- $("assignBtn").textContent=m==="proposal"?"Ask for a proposal":"Assign task";
- $("taskInput").placeholder=m==="proposal"?"e.g. A customer portal where our clients can log in with Okta and download their reports":"e.g. Add SSO login with Okta to the customer portal";
- $("leadText").textContent=m==="proposal"?"Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.":"Hand a task straight to delivery. Atlas picks the team, Lens reviews the code, and nothing is released until you approve it.";
- $("samples").innerHTML=(m==="proposal"?PROPOSAL_SAMPLES:SAMPLES).map(s=>`<button type="button">${s}</button>`).join("")}
-$("modeP").addEventListener("click",()=>setMode("proposal"));$("modeT").addEventListener("click",()=>setMode("task"));
+$("m3P").addEventListener("click",()=>setMode("proposal"));$("m3T").addEventListener("click",()=>setMode("task"));$("m3B").addEventListener("click",()=>setMode("build"));
+const BUILD_SAMPLES=["A website for selling mangoes with a product list, cart and contact form","A to-do list web app with local storage","A landing page for a coffee shop with a menu and opening hours"];
+function setMode(m){mode=m;
+ [["modeP","proposal"],["modeT","task"],["modeB","build"],["m3P","proposal"],["m3T","task"],["m3B","build"]].forEach(([id,k])=>$(id).setAttribute("aria-pressed",String(m===k)));
+ $("ask3dIn").placeholder=m==="proposal"?"Tell Atlas what you need…":m==="build"?"What should the team build on your computer?":"Give the team a task…";
+ $("assignBtn").textContent=m==="proposal"?"Ask for a proposal":m==="build"?"Build it":"Assign task";
+ $("taskInput").placeholder=m==="proposal"?"e.g. A customer portal where our clients can log in with Okta and download their reports":m==="build"?"e.g. A website for selling mangoes with a product list, cart and contact form":"e.g. Add SSO login with Okta to the customer portal";
+ $("leadText").textContent=m==="proposal"?"Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.":m==="build"?"The team works on your computer with real tools: they search the web, write the files, run the tests and start it on localhost. You try it, then approve before anything goes to GitHub. Needs the Claude desktop app open on your computer.":"Hand a task straight to delivery. Atlas picks the team, Lens reviews the code, and nothing is released until you approve it.";
+ $("samples").innerHTML=(m==="proposal"?PROPOSAL_SAMPLES:m==="build"?BUILD_SAMPLES:SAMPLES).map(s=>`<button type="button">${s}</button>`).join("")}
+$("modeP").addEventListener("click",()=>setMode("proposal"));$("modeT").addEventListener("click",()=>setMode("task"));$("modeB").addEventListener("click",()=>setMode("build"));
 setMode("proposal");
 $("samples").addEventListener("click",e=>{const b=e.target.closest("button");if(b){$("taskInput").value=b.textContent;$("taskInput").focus()}});
 $("company").value=DEFAULT_CTX;
@@ -1422,9 +1443,9 @@ $("vTop").addEventListener("click",()=>Office3D.top());$("vReset").addEventListe
 const RUNNER="trig_01HmXtmKbzwYJSqWBnCQGRoq";
 const ships=new Map(),outbox=new Map();let ghRepo="KadiyalaManoj/AI-office",ownerEmail="",mcpApi=null;
 function hasCode(t){return(t.outputs||[]).some(o=>o&&CODERS.includes(o.agent)&&/File:/.test(o.text))}
-async function pokeRunner(note){
+async function pokeRunner(note,trig){
  try{if(!mcpApi)mcpApi=await window.claude.use("mcp");if(!mcpApi)throw{code:"unavailable"};
-  await mcpApi.callTool("Claude Code Remote","fire_trigger",{trigger_id:RUNNER,text:note});return true}
+  await mcpApi.callTool("Claude Code Remote","fire_trigger",{trigger_id:trig||RUNNER,text:note});return true}
  catch(e){log(`Queued, but the runner couldn't be started from this page (${esc(e&&e.code||"unavailable")}). Ask Claude to run the "Agent Office" scheduled task, or click the button again later.`,"err");return false}}
 async function queueJob(col,id,data){
  if(!db){log("Outside actions need the office database. Open the page on claude.ai while signed in.","err");return}
@@ -1475,6 +1496,65 @@ function watchJobs(col,map){db.collection(col).onSnapshot(snap=>{snap.docChanges
   const prev=map.get(id),d=JSON.parse(JSON.stringify(ch.doc.data()));map.set(id,d);
   if(prev&&prev.status!=="done"&&d.status==="done"){if(col==="ship"){Office3D.say("relay","The pull request is open on GitHub.");log(`Pull request opened for <b>${esc(d.title)}</b>.`,"ship")}else log(`${d.type==="email"?"Proposal emailed":"Review meeting added to your calendar"}.`,"ship")}
   if(prev&&prev.status!=="failed"&&d.status==="failed")log(esc(d.error||"An outside action failed."),"err")});render()},()=>{})}
+/* ---------- Build on my computer (the build team runs on the owner's computer through Claude) ---------- */
+const BUILD_RUNNER="trig_01GX2dU5qYmeg5rrs4JH3xRk";
+const BUILD_TEAM=["atlas","nova","forge","byte","pixel","probe","lens","relay"];
+const BSTATUS={queued:"Queued",working:"Team is building",review:"Ready for your review",changes:"Changes requested",approved:"Approved · pushing soon",pushing:"Pushing to GitHub",done:"On GitHub",failed:"Failed"};
+const okLocal=u=>/^http:\/\/(localhost|127\.0\.0\.1)(:\d{2,5})?(\/[^\s"'<>]*)?$/.test(String(u||""));
+const okGh=u=>/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(String(u||""));
+async function newBuild(req){
+ if(!db){log("Builds need the office database. Open the page on claude.ai while signed in.","err");return}
+ const id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ const b={title:req.slice(0,80),request:req,repo:ghRepo,status:"queued",stage:"",log:[],created:Date.now(),error:"",note:"",feedback:"",localUrl:"",runCommand:"",prUrl:"",branch:"",summary:""};
+ builds.set(id,{id,...b});selTask=id;render();
+ try{await db.collection("builds").doc(id).set(b)}catch(e){log("Couldn't queue the build. Try again.","err");return}
+ log(`You asked the team to build <b>${esc(b.title)}</b> on your computer.`);Office3D.say("atlas","On it. The team will build it on your computer.");
+ pokeRunner(`New build: ${id}`,BUILD_RUNNER)}
+async function bupdate(id,data,msg){
+ try{await db.collection("builds").doc(id).update(data)}catch(e){log("Couldn't update the build. Try again.","err");return false}
+ if(msg)log(msg);pokeRunner(`Build ${id}: ${data.status}`,BUILD_RUNNER);return true}
+function bact(kind,id){
+ const b=builds.get(id);if(!b||!db)return;
+ if(kind==="approve"&&b.status==="review"){bupdate(id,{status:"approved",approvedAt:Date.now()},`You approved <b>${esc(b.title)}</b>. Relay will push it to GitHub.`);Office3D.say("you","Looks good. Push it to GitHub.")}
+ if(kind==="changes"&&b.status==="review"){const t=($("bchgIn")&&$("bchgIn").value||"").trim();if(!t){const er=$("bchgErr");if(er)er.textContent="Write what you want changed first.";return}
+  bupdate(id,{status:"changes",feedback:t.slice(0,3000)},`You sent changes on <b>${esc(b.title)}</b> back to the team.`);Office3D.say("you",excerpt("A few changes: "+t,110))}
+ if(kind==="retry"&&b.status==="failed")bupdate(id,{status:b.approvedAt?"approved":"queued",error:""},`Retrying <b>${esc(b.title)}</b>.`);
+ if(kind==="nudge")pokeRunner(`Build ${id}: nudge`,BUILD_RUNNER).then(ok=>{if(ok)log("Asked the build team to check in.")});
+ if(kind==="remove"){const el=document.querySelector(`[data-bact="remove"][data-id="${id}"]`);
+  if(el&&el.dataset.armed){builds.delete(id);if(selTask===id)selTask=null;db.collection("builds").doc(id).delete().catch(()=>{});render()}
+  else if(el){el.dataset.armed="1";el.textContent="Click again to remove";setTimeout(()=>{if(el.isConnected){delete el.dataset.armed;el.textContent="Remove"}},3000)}}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-bact]");if(b)bact(b.dataset.bact,b.dataset.id)});
+function renderBuild(b){
+ const ws=$("ws"),busy=["queued","working","approved","pushing","changes"].includes(b.status);
+ const logs=Array.isArray(b.log)?b.log.filter(x=>x&&A[x.agent]):[];const seen=new Set(logs.map(x=>x.agent));
+ let h=`<div class="ws-head"><div style="min-width:0"><div class="eyebrow">Build on your computer</div><h2 style="margin-top:6px">${esc(b.title)}</h2>
+  <div class="ws-meta"><span class="pill ${esc(b.status)}">${esc(BSTATUS[b.status]||b.status)}</span>${b.tests&&typeof b.tests==="object"?`<span class="pill">Tests ${Number(b.tests.passed)||0} passed · ${Number(b.tests.failed)||0} failed</span>`:""}${b.files?`<span class="pill">${Number(b.files)||0} files</span>`:""}</div></div>
+  <div class="ws-actions">${busy?`<button class="btn" data-bact="nudge" data-id="${b.id}">Check in with the team</button>`:""}${b.status!=="working"&&b.status!=="pushing"?`<button class="btn" data-bact="remove" data-id="${b.id}">Remove</button>`:""}</div></div>`;
+ if(b.error)h+=`<p class="ws-note err">${esc(b.error)}</p>`;
+ if(b.note)h+=`<p class="ws-note">${esc(b.note)}</p>`;
+ h+=`<div class="progress-box"><div class="ptrail">${BUILD_TEAM.map(id=>`<span class="${b.stage===id&&busy?"now":seen.has(id)?"done":""}">${A[id].name}</span>`).join("")}<span class="${b.status==="review"?"now":["approved","pushing","done"].includes(b.status)?"done":""}">Your review</span><span class="${b.status==="done"?"done":b.status==="pushing"?"now":""}">GitHub</span></div>
+  ${b.status==="queued"?`<p class="ws-note">Waiting for the build team to start on your computer. Keep the Claude desktop app open. If nothing happens in a few minutes, use "Check in with the team".</p>`:""}
+  ${b.status==="working"&&A[b.stage]?`<p class="ws-note">${A[b.stage].name} is working on your computer now.</p>`:""}</div>`;
+ if(okLocal(b.localUrl)||b.runCommand)h+=`<div class="runbox">${okLocal(b.localUrl)?`<span>Running on your computer: <a href="${esc(b.localUrl)}" target="_blank" rel="noopener">${esc(b.localUrl)}</a></span>`:""}${b.runCommand?`<span>If the page doesn't open, start it with: <code>${esc(b.runCommand)}</code>${b.folder?` in <code>${esc(b.folder)}</code>`:""}</span>`:""}</div>`;
+ if(b.status==="done"&&okGh(b.prUrl))h+=`<div class="okbox" style="margin-top:10px">Pushed to GitHub on branch ${esc(b.branch||"")}: <a href="${esc(b.prUrl)}" target="_blank" rel="noopener">${esc(b.prUrl.replace("https://github.com/",""))}</a></div>`;
+ if(b.summary)h+=`<section style="margin-top:12px"><h3 style="font-size:15px;margin-bottom:6px">Summary</h3><div class="out flat">${md(b.summary)}</div></section>`;
+ if(b.tests&&b.tests.summary)h+=`<section style="margin-top:12px"><h3 style="font-size:15px;margin-bottom:6px">Test results (real run)</h3><div class="out">${md(String(b.tests.summary))}</div></section>`;
+ if(b.status==="review")h+=`<section class="decide" style="margin-top:14px"><h3>Your decision</h3><p class="note-s">Open the site above and try it. Approve to push it to GitHub on a branch named after this task, or send changes back to the team.</p>
+  <label class="eyebrow" for="bchgIn">Changes you want</label><textarea id="bchgIn" placeholder="e.g. Make the header green, add a mango price per kg, and add a checkout page."></textarea><span class="field-err" id="bchgErr"></span>
+  <div class="ws-actions"><button class="btn gate" data-bact="approve" data-id="${b.id}">Approve and push to GitHub</button><button class="btn" data-bact="changes" data-id="${b.id}">Send changes to the team</button></div></section>`;
+ if(b.status==="failed")h+=`<div class="ws-actions" style="margin-top:10px"><button class="btn primary" data-bact="retry" data-id="${b.id}">Try again</button></div>`;
+ h+=`<section style="margin-top:14px"><h3 style="font-size:15px;margin-bottom:8px">Team log</h3>${logs.length?`<div class="blog">${logs.map(x=>`<div class="step"><span class="av">${ini(A[x.agent].name)}</span><div class="step-h"><b>${A[x.agent].name}</b><small>${A[x.agent].role}</small><span class="st">${x.at?new Date(Number(x.at)).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):""}</span></div><div class="out">${md(String(x.text||""))}</div></div>`).join("")}</div>`:`<p class="empty">The team's work appears here as each agent finishes a step.</p>`}</section>`;
+ h+=`<p class="note-s" style="margin-top:10px">Request: ${esc(b.request||b.title)}</p>`;
+ const keep=$("bchgIn")?{v:$("bchgIn").value,f:document.activeElement===$("bchgIn")}:null;
+ ws.innerHTML=h;
+ if(keep&&$("bchgIn")){$("bchgIn").value=keep.v;if(keep.f)$("bchgIn").focus()}}
+function watchBuilds(){db.collection("builds").onSnapshot(snap=>{snap.docChanges().forEach(ch=>{const id=ch.doc.id;if(ch.type==="removed"){builds.delete(id);return}
+  const prev=builds.get(id),d=Object.assign({id},JSON.parse(JSON.stringify(ch.doc.data())));builds.set(id,d);
+  if(prev&&prev.stage!==d.stage&&A[d.stage]&&d.status==="working")Office3D.say(d.stage,`Working on ${excerpt(d.title,60)} on your computer.`);
+  if(prev&&prev.status!=="review"&&d.status==="review"){log(`<b>${esc(d.title)}</b> is built and tested. Try it and approve.`,"gate");Office3D.say("relay",`${excerpt(d.title,60)} is running on your computer. Take a look.`)}
+  if(prev&&prev.status!=="done"&&d.status==="done"){log(`<b>${esc(d.title)}</b> is on GitHub.`,"ship");Office3D.say("relay","Pushed to GitHub.")}
+  if(prev&&prev.status!=="failed"&&d.status==="failed")log(esc(d.error||"The build failed."),"err")});
+  if(!selTask){const l=workList();if(l.length)selTask=l[0].id}render()},()=>log("Builds couldn't be loaded in this view.","err"))}
 /* ---------- Slack (posted directly from the page, only on a click) ---------- */
 const SLACK_ME={id:"U0CFVM39E9F",name:"a direct message to you"};let slackTarget=SLACK_ME;const slackState={};
 async function mcp(){if(!mcpApi)mcpApi=await window.claude.use("mcp");if(!mcpApi)throw{code:"unavailable"};return mcpApi}
@@ -1522,7 +1602,7 @@ render();
   db.doc("settings/company").get().then(sn=>{if(!sn.exists)return;const d=sn.data();if(d.profile){company=d.profile;$("company").value=company}
    if(d.rate){rate=num(d.rate,1,2000,85);$("rateIn").value=rate}if(/^[A-Z]{3}$/.test(d.currency||"")){currency=d.currency;$("curIn").value=currency}
    if(d.ghRepo){ghRepo=d.ghRepo;$("ghIn").value=ghRepo}if(d.slack&&d.slack.id){slackTarget=d.slack;$("slackTo").textContent=slackTarget.name}if(d.email){ownerEmail=d.email;$("mailIn").value=ownerEmail}render()}).catch(()=>{});
-  watchJobs("ship",ships);watchJobs("outbox",outbox);
+  watchJobs("ship",ships);watchJobs("outbox",outbox);watchBuilds();
   db.collection("proposals").orderBy("created","desc").limit(30).onSnapshot(snap=>{
    snap.docChanges().forEach(ch=>{const id=ch.doc.id;
     if(run&&run.taskId===id)return;
