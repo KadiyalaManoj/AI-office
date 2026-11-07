@@ -138,6 +138,13 @@ details.ctx textarea{width:100%;min-height:70px;margin-top:8px;border:1px solid 
 .out-tools button{border:0;background:none;color:var(--plan);font-size:12px;padding:2px 0}
 .gatebox{margin-top:6px;border:1px solid var(--gate);background:var(--gate-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;display:grid;gap:8px}
 .empty{font-size:13.5px;color:var(--muted);margin:0}
+.gatebox.warn{border-color:var(--bad)}
+.gatefacts{margin:0}
+.gatelist{margin:0;padding-left:18px;font-size:13px}
+.blockers{margin:0;color:var(--bad);font-size:13.5px}
+.files-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.files-row input[type=file]{font-size:12.5px;max-width:100%}
+.flist{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 
 .tasks{display:grid;gap:8px}
 .t{border:1px solid var(--line);border-radius:9px;padding:10px;display:grid;gap:7px;text-align:left;background:var(--surface);width:100%}
@@ -203,6 +210,10 @@ dl.facts dd{margin:0;min-width:0}
       <summary>Company context the agents work from</summary>
       <textarea id="company"></textarea>
       <div class="ctx-row"><button class="btn" type="button" id="saveCtx">Save context</button><span id="ctxMsg"></span></div>
+      <div class="files-row"><label for="codeIn">Codebase files the architect, developers, reviewer and QA should read:</label>
+        <input type="file" id="codeIn" multiple accept=".py,.ts,.tsx,.js,.jsx,.tf,.md,.yml,.yaml,.json,.toml,.sql,.sh,.txt,.html,.css">
+        <button class="btn" type="button" id="clearCode" hidden>Clear files</button></div>
+      <div class="flist" id="flist"></div>
     </details>
   </form>
 
@@ -257,15 +268,15 @@ const AGENTS=[
  {id:"forge",name:"Forge",role:"Solutions architect",room:"eng",mission:"Chooses the technical approach and splits the work into tickets.",tools:["design notes","APIs","data models"],guard:["Names risks up front"],
   job:"Write the technical design: approach, components and data model, APIs or interfaces, risks with mitigations, and a numbered ticket list where each ticket names its owner (Byte for backend, Pixel for frontend, Terra for infrastructure). Under 350 words."},
  {id:"byte",name:"Byte",role:"Backend developer",room:"eng",mission:"Writes Python services and APIs with tests.",tools:["Python","pytest","FastAPI"],guard:["Tests with every change"],
-  job:"Implement the backend tickets in Python. Give the essential code in fenced code blocks (one or two files) and pytest tests, under 120 lines of code in total. If Lens requested changes above, fix every finding and list what you changed. End with 2-3 lines of notes."},
+  job:"Implement the backend tickets in Python. Give the essential code in fenced code blocks, each block preceded by a line `File: <relative/path.py>`, plus pytest tests in files named tests/test_*.py, under 150 lines of code in total. Give each file's complete contents. If Lens requested changes above, fix every finding and list what you changed."},
  {id:"pixel",name:"Pixel",role:"Frontend developer",room:"eng",mission:"Builds the UI in React and TypeScript from the design and the APIs.",tools:["React","TypeScript","testing-library"],guard:["Accessible markup"],
-  job:"Implement the frontend tickets in React with TypeScript. Give the essential component code in fenced code blocks, under 100 lines in total. If Lens requested changes above, fix every finding and list what you changed."},
+  job:"Implement the frontend tickets in React with TypeScript. Give the essential component code in fenced code blocks, each preceded by a line `File: <relative/path.tsx>`, under 120 lines in total. Give each file's complete contents. If Lens requested changes above, fix every finding and list what you changed."},
  {id:"lens",name:"Lens",role:"Code reviewer",room:"eng",mission:"Reviews code and infrastructure for correctness, security, tests and cost.",tools:["code review","security","cost check"],guard:["Blocks on critical issues"],
   job:"Review the most recent code or Terraform above. List findings as lines in the form [CRITICAL|MAJOR|MINOR] area: issue. Fix: how. Cover security, correctness, tests and cost. Then end with exactly one final line: VERDICT: APPROVE or VERDICT: CHANGES REQUESTED. Request changes only for CRITICAL or MAJOR findings."},
  {id:"probe",name:"Probe",role:"QA engineer",room:"qa",mission:"Plans and specifies the tests that must pass before release.",tools:["test plans","edge cases","e2e"],guard:["Staging only"],
-  job:"Write the QA test plan: a Markdown table of test cases (ID, scenario, type, expected result), the edge cases you worry about, and the exit criteria for release. You cannot run tests, so do not claim results. Under 300 words."},
+  job:"Write the QA test plan: a Markdown table of test cases (ID, scenario, type, expected result), the edge cases you worry about, and the exit criteria for release. Code is not executed in this office, so never claim test results. Under 300 words. End with exactly one final line: QA: READY or QA: BLOCKED - <reason>."},
  {id:"terra",name:"Terra",role:"Infrastructure engineer",room:"ops",mission:"Writes Terraform for AWS infrastructure changes.",tools:["Terraform","AWS","EKS"],guard:["Plan only; apply runs in the pipeline"],
-  job:"Write the Terraform (HCL) for AWS needed for this task in fenced code blocks, under 100 lines, with variables and tags. Then summarize the resources the plan would add, change or destroy, and how to roll back. If Lens requested changes above, fix every finding."},
+  job:"Write the Terraform (HCL) for AWS needed for this task in fenced code blocks, each preceded by a line `File: <relative/path.tf>`, under 100 lines, with variables and tags. Then summarize the resources the plan would add, change or destroy, and how to roll back. Give each file's complete contents. If Lens requested changes above, fix every finding."},
  {id:"relay",name:"Relay",role:"CI/CD release manager",room:"ops",mission:"Writes the release plan once you approve: pipeline stages, rollout, rollback.",tools:["Jenkins","Helm","feature flags"],guard:["Waits for your approval"],
   job:"The human owner has approved this release. Write the release plan: Jenkins pipeline stages, rollout strategy (canary or blue-green, with percentages), feature flag, pre-release checklist, and exact rollback steps. Under 250 words."},
  {id:"pulse",name:"Pulse",role:"Site reliability",room:"ops",mission:"Defines what to watch after release and when to roll back.",tools:["SLOs","CloudWatch","alerts"],guard:["Rollback triggers defined"],
@@ -288,7 +299,8 @@ const now=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":
 
 let sample=null,db=null,live=false,blocked=false;
 const tasks=new Map();
-let selTask=null,selAgent="atlas",run=null,company=DEFAULT_CTX;
+let selTask=null,selAgent="atlas",run=null,company=DEFAULT_CTX,codeFiles=[];
+const CODE_TOTAL=60000,CODE_PER_FILE=15000;
 const writeChain=new Map();
 
 /* ---------- floor ---------- */
@@ -345,19 +357,42 @@ function save(t){
 function remove(t){tasks.delete(t.id);if(selTask===t.id)selTask=null;if(db)db.collection("tasks").doc(t.id).delete().catch(()=>{});render()}
 
 /* ---------- agent prompts ---------- */
+const LIMITS={code:20000,text:4000,old:1500};
 function teamText(t,upto){
- let s="";
- for(let i=0;i<upto;i++){const o=t.outputs[i];if(!o)continue;const a=A[o.agent];s+=`\n\n### ${a.name} (${a.role})\n${String(o.text).slice(0,3500)}`}
- return s||"\n\n(none yet)"}
-function echoJob(t,i){return i===0?"Triage this as support: customer impact, reproduction steps, severity (SEV1-SEV4) with reasoning, and a short holding reply to the affected customer. Under 250 words.":"The fix has been released. Write the customer update announcing it: what was wrong, what changed, and what customers should do, if anything. Under 150 words, warm and plain."}
+ const hist=[];for(let i=0;i<upto;i++){const o=t.outputs[i];if(o)hist.push(o)}
+ if(!hist.length)return"\n\n(none yet)";
+ const latest={};hist.forEach((o,i)=>latest[o.agent]=i);
+ return hist.map((o,i)=>{const a=A[o.agent];let body=String(o.text),lim=LIMITS.text,note="\n...(trimmed)";
+  if(CODERS.includes(o.agent)){if(latest[o.agent]!==i){lim=LIMITS.old;note="\n...(earlier draft, replaced by a later version below)"}else lim=LIMITS.code}
+  if(body.length>lim)body=body.slice(0,lim)+note;
+  return `\n\n### ${a.name} (${a.role})\n${body}`}).join("")}
+const ECHO_JOBS={
+ triage:"Triage this as support: customer impact, reproduction steps, severity (SEV1-SEV4) with reasoning, and a short holding reply to the affected customer. Under 250 words.",
+ voice:"Give the customer view of this request: who asks for it, the problem in their words, and what would make them happy. Under 200 words.",
+ fixed:"The fix has been released. Write the customer update announcing it: what was wrong, what changed, and what customers should do, if anything. Under 150 words, warm and plain.",
+ shipped:"This change has been released. Write the customer announcement: what is new or changed, who it affects, and what they need to do, if anything. Under 150 words, warm and plain.",
+ launch:"Prepare support for this launch: a help-center article draft (title and steps), three questions customers are likely to ask with answers, and a short reply support can send. Under 250 words."};
+function echoJob(t){
+ if(t.kind==="growth")return ECHO_JOBS.launch;
+ const afterCode=t.team.slice(0,t.idx).some(x=>CODERS.includes(x));
+ if(!afterCode)return t.kind==="bug"?ECHO_JOBS.triage:ECHO_JOBS.voice;
+ return t.kind==="bug"?ECHO_JOBS.fixed:ECHO_JOBS.shipped}
+const CODEBASE_READERS=["forge","byte","pixel","terra","lens","probe"];
+function codebaseText(){
+ if(!codeFiles.length)return"";
+ let s="\nFile tree:\n"+codeFiles.map(f=>f.path).join("\n")+"\n";
+ codeFiles.forEach(f=>{s+=`\n--- ${f.path} ---\n${f.text}\n`});
+ return s}
 function stepPrompt(t,agent){
  const a=A[agent];
- const job=agent==="echo"?echoJob(t,t.team.indexOf("echo")===t.idx&&t.idx<3?0:1):a.job;
+ const job=agent==="echo"?echoJob(t):a.job;
+ const cb=CODEBASE_READERS.includes(agent)?codebaseText():"";
+ const repo=cb?`\n\nThe existing codebase (read-only excerpt). Fit its structure, names and conventions. Paths in \`File:\` lines are relative to the repository root.${cb}`:"";
  return `You are ${a.name}, the ${a.role} agent in an AI agent team at a software company.
 Your mission: ${a.mission}
 
 Company context:
-${company}
+${company}${repo}
 
 Task: ${t.title}
 Priority: ${t.priority||"P2"} · Type: ${t.kind||"feature"}
@@ -379,22 +414,35 @@ New request from the owner: "${title}"
 Agents you can assign (use these ids only):
 ${list}
 
-Choose who works on this request and in what order. Rules: code written by byte, pixel or terra must be followed by lens. Anything that changes production must go through relay, which only runs after the human owner approves. Put probe after lens when code changes. Leave out agents who add nothing. Use at most 9 agents.
+Choose who works on this request and in what order. Rules: code written by byte, pixel or terra must be followed by lens, then probe, then relay. Relay only runs after the human owner approves. Leave out agents who add nothing. Use at most 9 agents.
 
 Reply with only a JSON object like:
 {"kind":"feature","priority":"P1","brief":"Two or three sentences for the team.","team":["nova","forge","byte","lens","probe","relay","pulse"]}
 kind is one of feature, bug, infra, growth. priority is one of P0, P1, P2, P3.`}
 
+const GATES=["lens","probe","relay"],POST_RELEASE=["pulse","quill"],MAX_TEAM=12;
+const dedupe=a=>a.filter((x,i)=>i===0||x!==a[i-1]);
 function validTeam(team,kind){
- let t=(Array.isArray(team)?team:[]).map(x=>String(x).toLowerCase().trim()).filter(x=>A[x]&&x!=="atlas");
- t=t.filter((x,i)=>x!==t[i-1]);
- if(!t.length)t=PIPES[kind]||PIPES.feature;
- const lastCoder=Math.max(...CODERS.map(c=>t.lastIndexOf(c)));
- if(lastCoder>=0){
-  if(!t.slice(lastCoder).includes("lens"))t.splice(lastCoder+1,0,"lens");
-  if(!t.includes("relay")){const after=Math.max(t.lastIndexOf("lens"),t.lastIndexOf("probe"));t.splice(after+1,0,"relay")}
- }
- return t.slice(0,10)}
+ let t=dedupe((Array.isArray(team)?team:[]).map(x=>String(x).toLowerCase().trim()).filter(x=>A[x]&&x!=="atlas"));
+ if(!t.length)t=(PIPES[kind]||PIPES.feature).slice();
+ if(!t.some(x=>CODERS.includes(x)))return dedupe(t.filter(x=>x!=="lens"&&x!=="relay")).slice(0,MAX_TEAM);
+ const first=t.findIndex(x=>CODERS.includes(x));let core=[],post=[];
+ t.forEach((x,i)=>{if(GATES.includes(x))return;if(POST_RELEASE.includes(x)||(x==="echo"&&i>first))post.push(x);else core.push(x)});
+ core=dedupe(core);post=[...new Set(post)];
+ while(core.length+GATES.length+post.length>MAX_TEAM&&post.length)post.pop();
+ while(core.length+GATES.length+post.length>MAX_TEAM){let j=-1;core.forEach((x,k)=>{if(!CODERS.includes(x))j=k});if(j<0)break;core.splice(j,1)}
+ return core.concat(GATES,post)}
+function lastOut(t,agent){for(let i=t.outputs.length-1;i>=0;i--){const o=t.outputs[i];if(o&&o.agent===agent)return o.text}return null}
+function gateSummary(t){
+ const lens=lastOut(t,"lens")||"";const v=[...lens.matchAll(/VERDICT:\s*(APPROVE|CHANGES\s+REQUESTED)/gi)].pop();
+ const verdict=v?v[1].toUpperCase().replace(/\s+/g," "):"NO VERDICT";
+ const findings=lens.split("\n").filter(l=>/^[\s*-]*\[(CRITICAL|MAJOR)\]/i.test(l)).map(l=>l.replace(/^[\s*-]+/,""));
+ const q=[...(lastOut(t,"probe")||"").matchAll(/QA:\s*(READY|BLOCKED[^\n]*)/gi)].pop();const qa=q?q[1].trim():"NO STATUS";
+ const blockers=[];
+ if(verdict==="CHANGES REQUESTED")blockers.push("Lens still requests changes after the revision.");
+ else if(verdict==="NO VERDICT")blockers.push("Lens did not give a verdict.");
+ if(/^BLOCKED/i.test(qa))blockers.push("Probe: QA "+qa+".");
+ return{verdict,findings,qa,blockers}}
 
 /* ---------- runner ---------- */
 const depth=()=>$("depth").value;
@@ -419,10 +467,11 @@ async function runStep(t,agent){
   const team=validTeam(plan&&plan.team,kind);
   t.team=["atlas"].concat(team);
   return `**Routed as ${kind} · ${t.priority}**\n\n${t.brief}\n\n**Team:** ${team.map(x=>A[x].name).join(" → ")}`}
- const {text}=await sample(stepPrompt(t,agent),{modelTier:depth(),signal:ctl.signal,cache:false,onText:({text})=>{
+ const {text,truncated}=await sample(stepPrompt(t,agent),{modelTier:depth(),signal:ctl.signal,cache:false,onText:({text})=>{
   if(!run||run.ctl!==ctl)return;run.text=text;
   const el=$("liveOut");if(el)el.textContent=text;
   const d=$("desk-"+agent);if(d)d.querySelector(".q").textContent=Math.round(text.length/5)+"w";}});
+ if(truncated){log(`${A[agent].name}'s reply hit the length limit and was cut off.`,"err");return text+"\n\n_(This reply hit the length limit and was cut off.)_"}
  return text}
 
 async function runTask(t){
@@ -437,7 +486,7 @@ async function runTask(t){
    const out=await runStep(t,agent);
    t.outputs[t.idx]={agent,text:out,at:Date.now()};
    if(agent==="atlas")log(`Atlas routed <b>${esc(t.title)}</b> to ${t.team.length-1} agents.`);
-   if(agent==="lens"&&/VERDICT:\s*CHANGES/i.test(out)&&!t.revised){
+   if(agent==="lens"&&gateSummary(t).verdict==="CHANGES REQUESTED"&&!t.revised){
     const prior=t.team.slice(0,t.idx).filter(x=>CODERS.includes(x));
     const coder=prior[prior.length-1];
     if(coder){t.team.splice(t.idx+1,0,coder,"lens");t.revised=true;log(`Lens sent <b>${esc(t.title)}</b> back to ${A[coder].name} for changes.`,"gate")}
@@ -475,6 +524,10 @@ function act(kind,id){
  const t=tasks.get(id);if(!t)return;
  if(kind==="stop"&&run&&run.taskId===id)run.ctl.abort();
  if(kind==="resume"&&(t.status==="paused")){t.status="queued";t.note="";save(t);render();pump()}
+ if(kind==="approve"&&t.status==="approval"&&gateSummary(t).blockers.length){
+  const b=document.querySelector(`[data-act="approve"][data-id="${id}"]`);
+  if(b&&!b.dataset.armed){b.dataset.armed="1";b.textContent="Click again to release anyway";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Approve despite blockers"}},4000);return}
+ }
  if(kind==="approve"&&t.status==="approval"){t.approved=true;t.status="queued";log(`You approved the release of <b>${esc(t.title)}</b>.`);packet("lens","relay");save(t);render();pump()}
  if(kind==="reject"&&t.status==="approval"){t.status="rejected";t.note="You rejected this release. Nothing goes out.";log(`You rejected the release of <b>${esc(t.title)}</b>.`,"err");save(t);render()}
  if(kind==="remove"){const b=document.querySelector(`[data-act="remove"][data-id="${id}"]`);
@@ -531,7 +584,11 @@ function renderWS(){
   if(o){st="Done";body=`<div class="out">${md(o.text)}</div><div class="out-tools"><button type="button" data-copy="${i}">Copy</button></div>`}
   else if(running&&i===t.idx){st="Writing…";dst="working";body=`<div class="out live" id="liveOut">${esc(run.text||"Thinking…")}</div>`}
   else if(i===t.idx&&t.status==="approval"){st="Needs approval";dst="approval";
-   body=`<div class="gatebox"><span>The team has finished the work above. Approve to let Relay write the release plan and the rest of the team finish. Rejecting stops the task here.</span><span class="ws-actions"><button class="btn gate" data-act="approve" data-id="${t.id}" ${live&&!blocked?"":"disabled"}>Approve release</button><button class="btn" data-act="reject" data-id="${t.id}">Reject</button></span></div>`}
+   const g=gateSummary(t);
+   body=`<div class="gatebox ${g.blockers.length?"warn":""}"><dl class="facts gatefacts"><dt>Lens</dt><dd>${esc(g.verdict)}</dd><dt>QA</dt><dd>${esc(g.qa)}</dd><dt>Tests</dt><dd>Not run. The browser office doesn't execute code; use the command-line office with --run-checks.</dd></dl>
+    ${g.findings.length?`<ul class="gatelist">${g.findings.slice(0,6).map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
+    ${g.blockers.length?`<p class="blockers"><b>Blockers:</b> ${g.blockers.map(esc).join(" ")}</p>`:`<span>Review the work above. Approving lets Relay write the release plan and the team finish. Rejecting stops the task here.</span>`}
+    <span class="ws-actions"><button class="btn gate" data-act="approve" data-id="${t.id}" ${live&&!blocked?"":"disabled"}>${g.blockers.length?"Approve despite blockers":"Approve release"}</button><button class="btn" data-act="reject" data-id="${t.id}">Reject</button></span></div>`}
   else if(i===t.idx&&t.status==="queued")st="Up next";
   html+=`<div class="step" data-st="${dst}"><span class="av">${ini(a.name)}</span><div class="step-h"><b>${a.name}</b><small>${a.role}</small><span class="st">${st}</span></div>${body}</div>`});
  html+=`</div>`;
@@ -567,6 +624,25 @@ $("saveCtx").addEventListener("click",async()=>{
  if(!db){$("ctxMsg").textContent="Used for this visit only.";return}
  try{await db.doc("settings/company").set({profile:company});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
 
+function renderFiles(){
+ $("flist").innerHTML=codeFiles.map(f=>`<span class="chip">${esc(f.path)}</span>`).join("");
+ $("clearCode").hidden=!codeFiles.length}
+async function saveFiles(){
+ renderFiles();if(!db){$("ctxMsg").textContent="Files apply for this visit only.";return}
+ try{await db.doc("settings/codebase").set({files:codeFiles});$("ctxMsg").textContent=codeFiles.length?`${codeFiles.length} files saved for the agents.`:"Files cleared."}
+ catch(_){$("ctxMsg").textContent="Couldn't save the files. They still apply for this visit."}}
+$("codeIn").addEventListener("change",async e=>{
+ const picked=[...e.target.files];let total=codeFiles.reduce((n,f)=>n+f.text.length,0),skipped=0;
+ for(const f of picked){
+  if(/(^|\/)\.env|secret|credential|\.pem$|\.key$|tfstate/i.test(f.name)){skipped++;continue}
+  let text;try{text=await f.text()}catch(_){skipped++;continue}
+  if(text.length>CODE_PER_FILE)text=text.slice(0,CODE_PER_FILE)+"\n...(trimmed)";
+  if(total+text.length>CODE_TOTAL){skipped++;continue}
+  codeFiles=codeFiles.filter(x=>x.path!==f.name).concat([{path:f.name,text}]);total+=text.length}
+ e.target.value="";await saveFiles();
+ if(skipped)$("ctxMsg").textContent+=` ${skipped} skipped (secret-looking, unreadable, or over the 60,000-character limit).`});
+$("clearCode").addEventListener("click",()=>{codeFiles=[];saveFiles()});
+
 function showBanner(msg){const b=$("banner");b.textContent=msg;b.hidden=false;const c=$("conn");c.dataset.s="off";c.querySelector("span").textContent="Agents offline";$("assignBtn").disabled=true}
 
 /* ---------- boot ---------- */
@@ -580,6 +656,7 @@ render();
  else{live=true;const c=$("conn");c.dataset.s="live";c.querySelector("span").textContent="Agents online · Claude"}
  if(!db){log("Tasks won't be saved in this view. They last until you leave the page.","err")}
  else{
+  db.doc("settings/codebase").get().then(sn=>{if(sn.exists&&Array.isArray(sn.data().files)){codeFiles=sn.data().files.filter(f=>f&&f.path&&typeof f.text==="string");renderFiles()}}).catch(()=>{});
   db.doc("settings/company").get().then(sn=>{if(sn.exists&&sn.data().profile){company=sn.data().profile;$("company").value=company}}).catch(()=>{});
   let first=true;const timer=setTimeout(()=>log("Saved tasks are taking a while to load.","err"),10000);
   db.collection("tasks").orderBy("created","desc").limit(40).onSnapshot(snap=>{
