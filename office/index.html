@@ -181,6 +181,7 @@ dl.facts dd{margin:0;min-width:0}
 .feed .ship{color:var(--ok);font-weight:600}
 .feed .gate{color:var(--gate);font-weight:500}
 .feed .err{color:var(--bad)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .ext{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
 .ext .st{color:var(--muted)}
 .ext .st.ok{color:var(--ok)}
@@ -298,6 +299,7 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
       <textarea id="company"></textarea>
       <div class="rate-row"><label for="rateIn">Hourly rate for budgets</label><input type="number" id="rateIn" min="1" max="2000" step="1" value="85"><label for="curIn">Currency</label><input id="curIn" value="USD" maxlength="3" style="width:70px;text-transform:uppercase"></div>
       <div class="rate-row"><label for="ghIn">GitHub repository for code</label><input id="ghIn" value="KadiyalaManoj/AI-office" maxlength="100" style="width:220px"><label for="mailIn">Email for proposals</label><input id="mailIn" type="email" placeholder="Leave blank to use your Gmail address" maxlength="120" style="width:240px"></div>
+      <div class="rate-row"><span>Slack updates go to <b id="slackTo">a direct message to you</b></span><label for="slackQ" class="sr">Find a Slack channel</label><input id="slackQ" placeholder="Channel name, e.g. all-ai" maxlength="60" style="width:200px"><button class="btn" type="button" id="slackFind">Find channel</button><button class="btn" type="button" id="slackMe">Use my DMs</button><span id="slackRes" class="ext"></span></div>
       <div class="ctx-row"><button class="btn" type="button" id="saveCtx">Save context</button><span id="ctxMsg"></span></div>
       <div class="files-row"><label for="codeIn">Codebase files the architect, developers, reviewer and QA should read:</label>
         <input type="file" id="codeIn" multiple accept=".py,.ts,.tsx,.js,.jsx,.tf,.md,.yml,.yaml,.json,.toml,.sql,.sh,.txt,.html,.css">
@@ -927,7 +929,7 @@ function renderProposal(p){
  }
  h+=`<div class="prop">`;
  if(pr&&p.status!=="review"&&!["approved","declined"].includes(p.status))h+=`<p class="eyebrow">Version ${p.version-1}, shown until the revision is ready</p>`;
- if(p.status==="approved"&&p.taskId)h+=`<div class="okbox">Approved. The team is delivering this project. <button type="button" class="linkbtn" data-open="${p.taskId}">Open the delivery task</button></div>`;
+ if(p.status==="approved"&&p.taskId)h+=`<div class="okbox">Approved. The team is delivering this project. <button type="button" class="linkbtn" data-open="${p.taskId}">Open the delivery task</button></div>${slackBlock("p:"+p.id)}`;
  if(pr){
   if(pr.changes)h+=`<section class="changes"><h3>What changed in version ${p.version}</h3><div class="out flat">${md(pr.changes)}</div></section>`;
   h+=`<section><p class="lead-p">${esc(pr.summary)}</p>
@@ -955,7 +957,7 @@ function renderProposal(p){
    <textarea id="chgIn" placeholder="e.g. Keep the budget under $40,000, drop the mobile app for now and add a reporting page."></textarea>
    <label class="chk"><input type="checkbox" id="chgChat" checked> Include my discussion with Atlas</label>
    <span class="field-err" id="chgErr"></span>
-   <div class="eyebrow" style="margin-top:6px">Share it</div>${outboxBlock(p)}
+   <div class="eyebrow" style="margin-top:6px">Share it</div>${outboxBlock(p)}${slackBlock("p:"+p.id)}
    <div class="ws-actions"><button class="btn gate" data-pact="approve" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Approve and start delivery</button><button class="btn" data-pact="changes" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Send changes to the team</button><button class="btn danger" data-pact="decline" data-id="${p.id}">Decline</button></div></section>`;
  }
  h+=`</div>`;
@@ -1044,6 +1046,7 @@ function renderWS(){
   html+=`<div class="step" data-st="${dst}"><span class="av">${ini(a.name)}</span><div class="step-h"><b>${a.name}</b><small>${a.role}</small><span class="st">${st}</span></div>${body}</div>`});
  html+=`</div>`;
  if(hasCode(t))html+=`<section class="card" style="margin-top:8px"><h3 style="font-size:15px;margin-bottom:8px">Send to GitHub</h3>${shipBlock(t)}<p class="note-s" style="margin-top:6px">Commits the agents' latest code to a new branch in ${esc(ghRepo)} and opens a pull request. Nothing is merged.</p></section>`;
+ html+=`<section class="card" style="margin-top:8px"><h3 style="font-size:15px;margin-bottom:8px">Tell the team on Slack</h3>${slackBlock("t:"+t.id)}</section>`;
  ws.innerHTML=html;
  const lo=$("liveOut");if(lo)lo.scrollTop=lo.scrollHeight}
 
@@ -1087,7 +1090,7 @@ $("saveCtx").addEventListener("click",async()=>{
  const gh=$("ghIn").value.trim();ghRepo=/^[\w.-]+\/[\w.-]+$/.test(gh)?gh:"KadiyalaManoj/AI-office";$("ghIn").value=ghRepo;
  const em=$("mailIn").value.trim();ownerEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)?em:"";$("mailIn").value=ownerEmail;render();
  if(!db){$("ctxMsg").textContent="Used for this visit only.";return}
- try{await db.doc("settings/company").set({profile:company,rate,currency,ghRepo,email:ownerEmail});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
+ try{await db.doc("settings/company").set({profile:company,rate,currency,ghRepo,email:ownerEmail,slack:slackTarget});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
 
 function renderFiles(){
  $("flist").innerHTML=codeFiles.map(f=>`<span class="chip">${esc(f.path)}</span>`).join("");
@@ -1445,6 +1448,37 @@ function watchJobs(col,map){db.collection(col).onSnapshot(snap=>{snap.docChanges
   const prev=map.get(id),d=JSON.parse(JSON.stringify(ch.doc.data()));map.set(id,d);
   if(prev&&prev.status!=="done"&&d.status==="done"){if(col==="ship"){Office3D.say("relay","The pull request is open on GitHub.");log(`Pull request opened for <b>${esc(d.title)}</b>.`,"ship")}else log(`${d.type==="email"?"Proposal emailed":"Review meeting added to your calendar"}.`,"ship")}
   if(prev&&prev.status!=="failed"&&d.status==="failed")log(esc(d.error||"An outside action failed."),"err")});render()},()=>{})}
+/* ---------- Slack (posted directly from the page, only on a click) ---------- */
+const SLACK_ME={id:"U0CFVM39E9F",name:"a direct message to you"};let slackTarget=SLACK_ME;const slackState={};
+async function mcp(){if(!mcpApi)mcpApi=await window.claude.use("mcp");if(!mcpApi)throw{code:"unavailable"};return mcpApi}
+function slackErr(e){const c=e&&e.code;return c==="not_granted"||c==="denied"?"You didn't allow Slack for this page. Reload to be asked again.":c==="server_not_connected"?"Slack isn't connected for you on claude.ai.":c==="tool_error"?"Slack refused the message. Check the channel and try again.":"Couldn't reach Slack. Try again."}
+async function postSlack(key,message){
+ slackState[key]={st:"sending"};render();
+ try{const r=await (await mcp()).callTool("Slack","slack_send_message",{channel_id:slackTarget.id,message:message.slice(0,4900)});
+  const link=JSON.stringify(r&&r.payload||r||"").match(/https:\/\/[\w.-]+\.slack\.com\/archives\/[\w/]+/);
+  slackState[key]={st:"done",link:link?link[0]:""};log(`Posted to Slack (${esc(slackTarget.name)}).`,"ship");Office3D.say("atlas","Posted the update to Slack.")}
+ catch(e){slackState[key]={st:"failed",msg:slackErr(e)}}
+ render()}
+function slackBlock(key,build){const s=slackState[key]||{};
+ const st=s.st==="sending"?`<span class="st">Posting…</span>`:s.st==="done"?`<span class="st ok">Posted${s.link?`: <a href="${esc(s.link)}" target="_blank" rel="noopener">open in Slack</a>`:"."}</span>`:s.st==="failed"?`<span class="st bad">${esc(s.msg)}</span>`:"";
+ return`<div class="ext"><button class="btn" data-slack="${esc(key)}" ${s.st==="sending"||!live?"disabled":""}>Post to Slack</button><span class="st">to ${esc(slackTarget.name)}</span>${st}</div>`}
+function proposalSlack(p){const pr=p.proposal,b=budget(p);
+ return `**Proposal ${p.status==="approved"?"approved":"ready for review"}: ${pr.title}** (version ${p.version})\n${pr.summary}\n\n• Budget: ${money(b.total)} to build${b.month?`, ${money(b.month)}/month to run`:""}\n• Timeline: ${totalWeeks(pr)} weeks\n• In scope: ${pr.scope_in.slice(0,5).join(", ")}\n\n_Estimates by the AI agent team. Review before quoting a client._`}
+function taskSlack(t){const g=gateSummary(t),sh=ships.get(t.id);
+ return `**${t.title}**: ${STATUS[t.status]}\n${t.brief?t.brief+"\n":""}\n• Review: ${g.verdict.toLowerCase()} · QA: ${g.qa.toLowerCase()}\n• Steps done: ${t.outputs.filter(Boolean).length} of ${t.team.length}${sh&&sh.prUrl?`\n• Pull request: ${sh.prUrl}`:""}`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-slack]");if(!b)return;const key=b.dataset.slack;
+ if(key.startsWith("p:")){const p=props.get(key.slice(2));if(p&&p.proposal)postSlack(key,proposalSlack(p))}
+ else{const t=tasks.get(key.slice(2));if(t)postSlack(key,taskSlack(t))}});
+$("slackMe").addEventListener("click",()=>{slackTarget=SLACK_ME;$("slackTo").textContent=slackTarget.name;$("slackRes").innerHTML="";saveSlack()});
+$("slackFind").addEventListener("click",async()=>{const q=$("slackQ").value.trim().replace(/^#/,"");const out=$("slackRes");
+ if(!q){out.innerHTML=`<span class="st bad">Type part of a channel name first.</span>`;return}
+ out.innerHTML=`<span class="st">Searching…</span>`;
+ try{const r=await (await mcp()).callTool("Slack","slack_search_channels",{keywords:[q],natural_language_query:"",limit:8,response_format:"concise",channel_types:"public_channel,private_channel"});
+  const text=String(r&&r.payload&&r.payload.results||JSON.stringify(r&&r.payload||""));const found=[...text.matchAll(/#([\w.-]+) \((C[A-Z0-9]+)\)/g)].map(m=>({name:"#"+m[1],id:m[2]}));
+  out.innerHTML=found.length?found.map(c=>`<button class="btn" type="button" data-chan="${esc(c.id)}" data-cname="${esc(c.name)}">${esc(c.name)}</button>`).join(""):`<span class="st">No channels match "${esc(q)}".</span>`}
+ catch(e){out.innerHTML=`<span class="st bad">${esc(slackErr(e))}</span>`}});
+$("slackRes").addEventListener("click",e=>{const b=e.target.closest("[data-chan]");if(!b)return;slackTarget={id:b.dataset.chan,name:b.dataset.cname};$("slackTo").textContent=slackTarget.name;$("slackRes").innerHTML=`<span class="st ok">Updates will go to ${esc(slackTarget.name)}.</span>`;saveSlack()});
+async function saveSlack(){render();if(!db)return;try{const sn=await db.doc("settings/company").get();await db.doc("settings/company").set({...(sn.exists?sn.data():{}),slack:slackTarget})}catch(_){}}
 /* ---------- boot ---------- */
 render();
 {let saved=null;try{saved=localStorage.getItem("office-view")}catch(_){}setView(saved!=="2d")}
@@ -1460,7 +1494,7 @@ render();
   db.doc("settings/codebase").get().then(sn=>{if(sn.exists&&Array.isArray(sn.data().files)){codeFiles=sn.data().files.filter(f=>f&&f.path&&typeof f.text==="string");renderFiles()}}).catch(()=>{});
   db.doc("settings/company").get().then(sn=>{if(!sn.exists)return;const d=sn.data();if(d.profile){company=d.profile;$("company").value=company}
    if(d.rate){rate=num(d.rate,1,2000,85);$("rateIn").value=rate}if(/^[A-Z]{3}$/.test(d.currency||"")){currency=d.currency;$("curIn").value=currency}
-   if(d.ghRepo){ghRepo=d.ghRepo;$("ghIn").value=ghRepo}if(d.email){ownerEmail=d.email;$("mailIn").value=ownerEmail}render()}).catch(()=>{});
+   if(d.ghRepo){ghRepo=d.ghRepo;$("ghIn").value=ghRepo}if(d.slack&&d.slack.id){slackTarget=d.slack;$("slackTo").textContent=slackTarget.name}if(d.email){ownerEmail=d.email;$("mailIn").value=ownerEmail}render()}).catch(()=>{});
   watchJobs("ship",ships);watchJobs("outbox",outbox);
   db.collection("proposals").orderBy("created","desc").limit(30).onSnapshot(snap=>{
    snap.docChanges().forEach(ch=>{const id=ch.doc.id;
