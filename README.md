@@ -13,19 +13,25 @@ An AI agent office for a software company: thirteen agents, each with one job, p
 
 ## How a task flows
 
-1. Atlas reads the request and chooses a pipeline (feature, bug, infra or growth) and the agents for it.
-2. Each agent writes its deliverable from everything the agents before it wrote.
-3. Lens reviews code and Terraform. If it requests changes, the work goes back to the author once.
-4. The run stops before Relay. Nothing is released until you approve.
-5. Relay writes the release plan, Pulse the monitoring plan, Quill or Echo the customer messaging.
+1. Atlas reads the request, picks a type (feature, bug, infra or growth) and proposes a team.
+2. The office enforces the safety order no matter what Atlas proposes. Whenever code or Terraform is written, the team ends with **Lens → Probe → Relay**, followed by post-release work. These steps are never dropped or reordered.
+3. Each agent writes its deliverable from everything before it. Reviewers always see the latest code in full.
+4. Lens ends every review with `VERDICT: APPROVE` or `VERDICT: CHANGES REQUESTED`. If changes are requested, the code goes back to its author once.
+5. Probe ends with `QA: READY` or `QA: BLOCKED - reason`.
+6. The run stops at the **release gate**. It shows Lens's verdict, the critical and major findings, QA status and check results, and lists any blockers. Releasing over a blocker takes an explicit extra step.
+7. After approval, Relay writes the release plan, Pulse the monitoring plan, and Quill or Echo the customer messaging.
 
-Agents write deliverables (specs, code, Terraform, plans). They do not deploy, apply Terraform or merge anything.
+Agents write deliverables: specs, code, Terraform and plans. They never deploy, apply Terraform or merge.
 
 ## Two ways to run it
 
 ### In the browser: `office/index.html`
 
-The interactive floor plan. It runs as a claude.ai artifact, where each agent calls Claude on the viewer's account and tasks are saved between visits. Opened outside claude.ai it shows the layout but the agents stay offline.
+The interactive floor plan. It runs as a claude.ai artifact, where each agent calls Claude on the viewer's account and tasks are saved between visits.
+
+- Under **Company context**, describe your stack and attach **codebase files** (up to 60,000 characters). The architect, developers, reviewer and QA read them.
+- The browser office doesn't execute code. Use the command line with `--run-checks` for real test runs.
+- Opened outside claude.ai, it shows the layout but the agents stay offline.
 
 ### From the command line: `agents/`
 
@@ -33,13 +39,26 @@ The interactive floor plan. It runs as a claude.ai artifact, where each agent ca
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export ANTHROPIC_API_KEY=...            # from console.anthropic.com
-python -m agents.office "Add SSO login with Okta"
+python -m agents.office "Add SSO login with Okta" --repo ../my-service --run-checks
 ```
 
-Options:
+| Option | What it does |
+|---|---|
+| `--repo PATH` | The agents read your repository's file tree and the files most related to the task, so their code fits it. Secret-looking files (`.env`, keys, Terraform state) are never read. |
+| `--run-checks` | Runs `pytest`, and `terraform fmt`/`validate` if Terraform is installed, after each coding step. Results go to Lens, Probe and the release gate. **This executes code the agents wrote**, so use a container or throwaway VM. API keys and tokens are removed from its environment. |
+| `--approve` | Pre-approves the release for unattended runs, but only when there are no blockers. Without it, a non-interactive run stops at the gate. |
+| `--company FILE` | Your own company context: stack, conventions, constraints. |
+| `--model ID` | Model for the agents. `AI_OFFICE_MODEL` and `AI_OFFICE_PLANNER_MODEL` set defaults. |
+| `--out DIR` | Where runs are saved (default `runs`). |
 
-- `--company context.txt` gives the agents your own company context (stack, conventions, constraints).
-- `--model <model-id>` picks the model for the agents. `AI_OFFICE_MODEL` and `AI_OFFICE_PLANNER_MODEL` set the defaults.
-- `--out runs` sets where runs are saved.
+Each run gets its own folder, `runs/<date>-<task>[-N]/`. It holds one Markdown file per step, `GATE.md` with the release-gate summary, the agents' files under `code/`, and, with `--run-checks`, the test `workspace/`. The exit code is `0` when the run completes and `2` when it stops at the release gate.
 
-Each run saves one Markdown file per agent in `runs/<date>-<task>/`, plus any code the agents wrote under `code/`. Review it, then commit what you want to keep on a branch and open a pull request.
+## Development
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest -q                    # runner: team rules, context, extraction, gate, end-to-end runs
+node tests/page/page_logic.test.js     # browser office follows the same rules
+```
+
+GitHub Actions runs both on every pull request.
