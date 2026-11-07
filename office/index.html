@@ -7,17 +7,17 @@
 /* Layout: architect's floor plan + task workspace on the left, operations rail (tasks, agent profile, log) on the right. */
 :root{
   --paper:#eef2f5; --surface:#ffffff; --ink:#15202b; --muted:#5a6876; --line:#c5d0da; --plan:#2c5a87; --plan-soft:#dfe8f1;
-  --ok:#2e8a57; --ok-soft:#dcf0e4; --wait:#8a96a3; --gate:#b06f12; --gate-soft:#fbecd3; --hot:#c2410c; --bad:#b42318; --code:#f4f7fa;
+  --scene:#e3e9ef; --ok:#2e8a57; --ok-soft:#dcf0e4; --wait:#8a96a3; --gate:#b06f12; --gate-soft:#fbecd3; --hot:#c2410c; --bad:#b42318; --code:#f4f7fa;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#0d151e; --surface:#142130; --ink:#e4ebf2; --muted:#94a4b4; --line:#2b3c4f; --plan:#86b5e3; --plan-soft:#1b2d41;
-  --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}}
+  --scene:#0a111a; --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0d151e; --surface:#142130; --ink:#e4ebf2; --muted:#94a4b4; --line:#2b3c4f; --plan:#86b5e3; --plan-soft:#1b2d41;
-  --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}
+  --scene:#0a111a; --ok:#5cc58b; --ok-soft:#173528; --wait:#6f7d8b; --gate:#f0b04a; --gate-soft:#3a2b12; --hot:#fb923c; --bad:#f97066; --code:#0f1a26; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--body);
@@ -181,6 +181,20 @@ dl.facts dd{margin:0;min-width:0}
 .feed .ship{color:var(--ok);font-weight:600}
 .feed .gate{color:var(--gate);font-weight:500}
 .feed .err{color:var(--bad)}
+.ext{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.ext .st{color:var(--muted)}
+.ext .st.ok{color:var(--ok)}
+.ext .st.bad{color:var(--bad)}
+.ext a{color:var(--plan)}
+.ext input[type=datetime-local]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink);font:inherit}
+.viewbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}
+.viewtools{display:flex;gap:8px}
+.stage3d{position:relative;height:clamp(360px,min(64vh,110vw),680px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--scene)}
+.stage3d canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint3d{position:absolute;left:12px;bottom:10px;font:400 11.5px var(--mono);color:var(--muted);pointer-events:none}
+.tip3d{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:8px;padding:6px 10px;font-size:12.5px;line-height:1.3;transform:translate(12px,-120%);white-space:nowrap}
+.tip3d b{display:block}
+.fallback3d{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);padding:24px;text-align:center}
 .mode{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
 .mode button{border:0;background:var(--surface);padding:8px 12px;font-size:13px}
 .mode button[aria-pressed="true"]{background:var(--plan);color:var(--surface);font-weight:600}
@@ -283,6 +297,7 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
       <summary>Company context the agents work from</summary>
       <textarea id="company"></textarea>
       <div class="rate-row"><label for="rateIn">Hourly rate for budgets</label><input type="number" id="rateIn" min="1" max="2000" step="1" value="85"><label for="curIn">Currency</label><input id="curIn" value="USD" maxlength="3" style="width:70px;text-transform:uppercase"></div>
+      <div class="rate-row"><label for="ghIn">GitHub repository for code</label><input id="ghIn" value="KadiyalaManoj/AI-office" maxlength="100" style="width:220px"><label for="mailIn">Email for proposals</label><input id="mailIn" type="email" placeholder="Leave blank to use your Gmail address" maxlength="120" style="width:240px"></div>
       <div class="ctx-row"><button class="btn" type="button" id="saveCtx">Save context</button><span id="ctxMsg"></span></div>
       <div class="files-row"><label for="codeIn">Codebase files the architect, developers, reviewer and QA should read:</label>
         <input type="file" id="codeIn" multiple accept=".py,.ts,.tsx,.js,.jsx,.tf,.md,.yml,.yaml,.json,.toml,.sql,.sh,.txt,.html,.css">
@@ -301,8 +316,11 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
   <div class="main">
     <div class="left">
       <section>
+        <div class="viewbar"><span class="mode" role="group" aria-label="Office view"><button type="button" id="v3d" aria-pressed="true">3D office</button><button type="button" id="v2d" aria-pressed="false">Floor plan</button></span>
+          <span class="viewtools" id="viewTools"><button class="btn" type="button" id="vTop">Top view</button><button class="btn" type="button" id="vReset">Reset view</button></span></div>
+        <div class="stage3d" id="stage3d" hidden><div class="tip3d" hidden></div><span class="hint3d">Drag to orbit · scroll to zoom · select a person</span></div>
         <div class="floor" id="floor"></div>
-        <div class="legend">
+        <div class="legend" id="legend2d">
           <span><i style="background:var(--ok)"></i>Working now</span>
           <span><i style="background:var(--gate)"></i>Needs your approval</span>
           <span><i style="background:var(--wait)"></i>Idle</span>
@@ -326,6 +344,8 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 (function(){
 const ROOMS=[
@@ -391,7 +411,7 @@ ROOMS.forEach(r=>{
 
 function center(id){const f=floor.getBoundingClientRect(),r=$("desk-"+id).querySelector(".av").getBoundingClientRect();return{x:r.left-f.left+r.width/2,y:r.top-f.top+r.height/2}}
 function packet(from,to){
- if(!from||!to||from===to||!$("desk-"+from)||!$("desk-"+to)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ if(!from||!to||from===to||$("floor").hidden||!$("desk-"+from)||!$("desk-"+to)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
  const p=document.createElement("i");p.className="packet";const a=center(from),b=center(to);
  p.style.left=a.x+"px";p.style.top=a.y+"px";floor.appendChild(p);
  requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.left=b.x+"px";p.style.top=b.y+"px"}));
@@ -533,7 +553,7 @@ function errCopy(e){
 
 async function runStep(t,agent){
  const ctl=new AbortController();
- run={taskId:t.id,agent,ctl,text:""};render();
+ run={taskId:t.id,agent,ctl,text:""};Office3D.work(agent);render();
  if(agent==="atlas"){
   const plan=await sample.json(atlasPrompt(t),{modelTier:"quick",signal:ctl.signal,cache:false});
   const kind=["feature","bug","infra","growth"].includes(plan&&plan.kind)?plan.kind:"feature";
@@ -555,7 +575,7 @@ async function runTask(t){
   while(t.idx<t.team.length){
    const agent=t.team[t.idx];
    if(agent==="relay"&&!t.approved){
-    t.status="approval";save(t);
+    t.status="approval";save(t);Office3D.idle();Office3D.status("relay","approval");Office3D.say("relay",`${t.title} is ready to release. Waiting for your approval.`);
     log(`Release of <b>${esc(t.title)}</b> is waiting for your approval.`,"gate");return}
    if(agent!=="atlas")log(`${A[agent].name} started on <b>${esc(t.title)}</b>.`);
    const out=await runStep(t,agent);
@@ -567,16 +587,19 @@ async function runTask(t){
     if(coder){t.team.splice(t.idx+1,0,coder,"lens");t.revised=true;log(`Lens sent <b>${esc(t.title)}</b> back to ${A[coder].name} for changes.`,"gate")}
    }
    t.idx++;save(t);
-   if(t.idx<t.team.length)packet(agent,t.team[t.idx]);
+   if(t.idx<t.team.length){packet(agent,t.team[t.idx]);
+    const nx=t.team[t.idx],g=agent==="lens"?gateSummary(t):null;
+    const line=agent==="atlas"?`New task: ${t.title}. You're up first.`:g?(g.verdict==="APPROVE"?"Review done: approved. Over to you.":`Changes requested: ${excerpt(g.findings[0]||"see my review",90)}`):`Done: ${excerpt(out,100)}`;
+    Office3D.handoff(agent,nx,line,nx==="relay"?null:"Thanks, I'll take it from here.")}
    run=null;render();
   }
-  t.status="shipped";save(t);log(`<b>${esc(t.title)}</b> is complete. Every deliverable is in the workspace.`,"ship");
+  t.status="shipped";save(t);Office3D.say(t.team[t.team.length-1],`${t.title} is complete.`);log(`<b>${esc(t.title)}</b> is complete. Every deliverable is in the workspace.`,"ship");
  }catch(e){
   if(e&&e.code==="cancelled"){t.status="paused";t.note="You stopped this task. Resume to continue from the same step.";}
   else{t.status="paused";t.note=errCopy(e);log(`${esc(t.title)}: ${esc(t.note)}`,"err");
    if(e&&(e.code==="not_granted"||e.code==="sampling_disabled")){blocked=true;showBanner(t.note)}}
   save(t);
- }finally{run=null;render()}}
+ }finally{run=null;Office3D.idle();render()}}
 
 let pumping=false;
 async function pump(){
@@ -603,8 +626,8 @@ function act(kind,id){
   const b=document.querySelector(`[data-act="approve"][data-id="${id}"]`);
   if(b&&!b.dataset.armed){b.dataset.armed="1";b.textContent="Click again to release anyway";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Approve despite blockers"}},4000);return}
  }
- if(kind==="approve"&&t.status==="approval"){t.approved=true;t.status="queued";log(`You approved the release of <b>${esc(t.title)}</b>.`);packet("lens","relay");save(t);render();pump()}
- if(kind==="reject"&&t.status==="approval"){t.status="rejected";t.note="You rejected this release. Nothing goes out.";log(`You rejected the release of <b>${esc(t.title)}</b>.`,"err");save(t);render()}
+ if(kind==="approve"&&t.status==="approval"){Office3D.status("relay");Office3D.say("you","Approved. Ship it!");t.approved=true;t.status="queued";log(`You approved the release of <b>${esc(t.title)}</b>.`);packet("lens","relay");save(t);render();pump()}
+ if(kind==="reject"&&t.status==="approval"){Office3D.status("relay");Office3D.say("you","Not this time. Let's hold the release.");t.status="rejected";t.note="You rejected this release. Nothing goes out.";log(`You rejected the release of <b>${esc(t.title)}</b>.`,"err");save(t);render()}
  if(kind==="remove"){const b=document.querySelector(`[data-act="remove"][data-id="${id}"]`);
   if(b&&b.dataset.armed){remove(t)}else if(b){b.dataset.armed="1";b.textContent="Click again to remove";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Remove"}},3000)}}
 }
@@ -769,10 +792,10 @@ function sanitizeHTML(html){
 
 /* runner */
 async function callJSON(p,agent,prompt,tier){
- const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};render();
+ const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};Office3D.work(agent);render();
  return sample.json(prompt,{modelTier:tier||depth(),signal:ctl.signal,cache:false,onText:({text})=>{if(!run||run.ctl!==ctl)return;run.text=text;liveWords(agent,text)}})}
 async function callText(p,agent,prompt){
- const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};render();
+ const ctl=new AbortController();run={taskId:p.id,agent,ctl,text:""};Office3D.work(agent);render();
  const {text}=await sample(prompt,{modelTier:depth()==="quick"?"default":depth(),signal:ctl.signal,cache:false,onText:({text})=>{if(!run||run.ctl!==ctl)return;run.text=text;liveWords(agent,text)}});
  return text}
 function liveWords(agent,text){const w=Math.round(text.length/5);const el=$("liveOut");if(el)el.textContent=`${A[agent].name} is writing… about ${w} words so far`;const d=$("desk-"+agent);if(d)d.querySelector(".q").textContent=w+"w"}
@@ -785,11 +808,14 @@ async function runProposal(p){
    p.kickoff=cleanKickoff(await callJSON(p,"atlas",kickoffPrompt(p),"default"),p);
    if(p.kickoff.title&&p.version<=1)p.title=p.kickoff.title;
    p.teamIdx=0;p.stage=p.kickoff.team.length?"team":"synth";saveProp(p);
-   if(p.kickoff.team.length){log(`Atlas asked ${p.kickoff.team.map(m=>A[m.id].name).join(", ")} for input.`);packet("atlas",p.kickoff.team[0].id)}
+   if(p.kickoff.team.length){log(`Atlas asked ${p.kickoff.team.map(m=>A[m.id].name).join(", ")} for input.`);packet("atlas",p.kickoff.team[0].id);
+    Office3D.meeting(["atlas"].concat(p.kickoff.team.map(m=>m.id)),`Proposal: ${p.title}`,p.version>1?`The owner asked for changes: ${excerpt(p.change,90)}`:excerpt(p.kickoff.understanding,110))}
   }
   while(p.stage==="team"){
    const m=p.kickoff.team[p.teamIdx];
    p.notes=p.notes||{};p.notes[m.id]=cleanNote(await callJSON(p,m.id,teamPrompt(p,m)));
+   {const n=p.notes[m.id],hrs=n.estimates.reduce((s,e)=>s+e.hours,0);Office3D.say(m.id,`${excerpt(n.note,95)}${hrs?` That's about ${hrs} hours from me.`:""}`)}
+   if(p.teamIdx+1>=p.kickoff.team.length)Office3D.endMeeting("Thanks, everyone. I'll write up the proposal.");
    p.teamIdx++;if(p.teamIdx>=p.kickoff.team.length)p.stage="synth";
    saveProp(p);packet(m.id,p.stage==="team"?p.kickoff.team[p.teamIdx].id:"atlas");run=null;render();
   }
@@ -803,14 +829,15 @@ async function runProposal(p){
    if(html)p.mockup={html,at:Date.now()};else log("Iris couldn't produce a sample screen this time. The rest of the proposal is ready.","err");
    p.stage="done";saveProp(p);packet("iris","atlas");
   }
-  p.status="review";saveProp(p);
+  p.status="review";saveProp(p);Office3D.idle();
+  {const b=budget(p);Office3D.handoff("atlas","you",`Your proposal for ${p.title} is ready: ${money(b.total)}, ${totalWeeks(p.proposal)} weeks.`,"Thanks, I'll take a look.")}
   log(`Atlas has ${p.version>1?`revision ${p.version} of `:""}the proposal for <b>${esc(p.title)}</b> ready for your review.`,"gate");
  }catch(e){
   p.status="paused";p.note=e&&e.code==="cancelled"?"You stopped this proposal. Resume to continue from the same step.":errCopy(e);
   if(!(e&&e.code==="cancelled"))log(`${esc(p.title)}: ${esc(p.note)}`,"err");
   if(e&&(e.code==="not_granted"||e.code==="sampling_disabled")){blocked=true;showBanner(p.note)}
-  saveProp(p);
- }finally{run=null;render()}}
+  saveProp(p);Office3D.endMeeting();
+ }finally{run=null;Office3D.idle();render()}}
 
 function newProposal(req){
  const id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -836,7 +863,7 @@ function pact(kind,id){
  if(kind==="resume"&&p.status==="paused"){p.status="queued";p.note="";saveProp(p);render();pump()}
  if(kind==="approve"&&p.status==="review"){
   const tid=newTask(p.proposal.title||p.title,proposalContext(p),true);
-  p.status="approved";p.taskId=tid;saveProp(p);
+  p.status="approved";p.taskId=tid;saveProp(p);Office3D.say("you","Approved. Let's build it!");
   log(`You approved <b>${esc(p.title)}</b>. Atlas is starting delivery.`,"ship");packet("atlas","nova");selTask=id;render();pump()}
  if(kind==="changes"&&p.status==="review"){
   const box=$("chgIn"),inc=$("chgChat"),err=$("chgErr");const text=(box&&box.value||"").trim();
@@ -845,7 +872,7 @@ function pact(kind,id){
   const b=budget(p);
   p.versions=(p.versions||[]).concat([{version:p.version,proposal:p.proposal,total:b.total,weeks:totalWeeks(p.proposal),month:b.month}]).slice(-3);
   p.change=(text||"See the discussion below.")+(inc&&inc.checked&&chat?`\n\nFrom the owner's discussion with Atlas:\n${chat}`:"");
-  p.version++;p.stage="kickoff";p.status="queued";p.chat=[];p.note="";
+  p.version++;p.stage="kickoff";p.status="queued";p.chat=[];p.note="";Office3D.say("you",`A few changes, please: ${excerpt(text||"see our discussion",90)}`);
   saveProp(p);log(`You sent changes on <b>${esc(p.title)}</b>. Atlas is taking them to the team.`,"gate");packet("atlas","nova");render();pump()}
  if(kind==="decline"&&p.status==="review"){
   const b=document.querySelector(`[data-pact="decline"][data-id="${id}"]`);
@@ -857,12 +884,12 @@ function pact(kind,id){
 
 async function askAtlas(p,msg){
  if(chatRun||!sample)return;
- p.chat=p.chat||[];p.chat.push({role:"user",content:msg});
+ p.chat=p.chat||[];p.chat.push({role:"user",content:msg});Office3D.say("you",excerpt(msg,110));
  const ctl=new AbortController();chatRun={id:p.id,ctl,text:""};render();
  try{
   const turns=[{role:"user",content:chatIntro(p)}].concat(p.chat.slice(-12));
   const {text}=await sample(turns,{modelTier:"default",signal:ctl.signal,cache:false,onText:({text})=>{chatRun.text=text;const el=$("chatLive");if(el){el.innerHTML=md(text);const c=$("chatLog");if(c)c.scrollTop=c.scrollHeight}}});
-  p.chat.push({role:"assistant",content:text});
+  p.chat.push({role:"assistant",content:text});Office3D.say("atlas",excerpt(text,120));
  }catch(e){
   if(e&&e.code!=="cancelled")p.chat.push({role:"assistant",content:"_"+errCopy(e).replace("this task","this message")+"_"});
  }finally{chatRun=null;saveProp(p);render()}}
@@ -928,6 +955,7 @@ function renderProposal(p){
    <textarea id="chgIn" placeholder="e.g. Keep the budget under $40,000, drop the mobile app for now and add a reporting page."></textarea>
    <label class="chk"><input type="checkbox" id="chgChat" checked> Include my discussion with Atlas</label>
    <span class="field-err" id="chgErr"></span>
+   <div class="eyebrow" style="margin-top:6px">Share it</div>${outboxBlock(p)}
    <div class="ws-actions"><button class="btn gate" data-pact="approve" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Approve and start delivery</button><button class="btn" data-pact="changes" data-id="${p.id}" ${live&&!blocked?"":"disabled"}>Send changes to the team</button><button class="btn danger" data-pact="decline" data-id="${p.id}">Decline</button></div></section>`;
  }
  h+=`</div>`;
@@ -1015,6 +1043,7 @@ function renderWS(){
   else if(i===t.idx&&t.status==="queued")st="Up next";
   html+=`<div class="step" data-st="${dst}"><span class="av">${ini(a.name)}</span><div class="step-h"><b>${a.name}</b><small>${a.role}</small><span class="st">${st}</span></div>${body}</div>`});
  html+=`</div>`;
+ if(hasCode(t))html+=`<section class="card" style="margin-top:8px"><h3 style="font-size:15px;margin-bottom:8px">Send to GitHub</h3>${shipBlock(t)}<p class="note-s" style="margin-top:6px">Commits the agents' latest code to a new branch in ${esc(ghRepo)} and opens a pull request. Nothing is merged.</p></section>`;
  ws.innerHTML=html;
  const lo=$("liveOut");if(lo)lo.scrollTop=lo.scrollHeight}
 
@@ -1054,9 +1083,11 @@ $("company").value=DEFAULT_CTX;
 $("saveCtx").addEventListener("click",async()=>{
  company=$("company").value.trim()||DEFAULT_CTX;
  rate=num($("rateIn").value,1,2000,85);$("rateIn").value=rate;
- const cur=$("curIn").value.trim().toUpperCase();currency=/^[A-Z]{3}$/.test(cur)?cur:"USD";$("curIn").value=currency;render();
+ const cur=$("curIn").value.trim().toUpperCase();currency=/^[A-Z]{3}$/.test(cur)?cur:"USD";$("curIn").value=currency;
+ const gh=$("ghIn").value.trim();ghRepo=/^[\w.-]+\/[\w.-]+$/.test(gh)?gh:"KadiyalaManoj/AI-office";$("ghIn").value=ghRepo;
+ const em=$("mailIn").value.trim();ownerEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)?em:"";$("mailIn").value=ownerEmail;render();
  if(!db){$("ctxMsg").textContent="Used for this visit only.";return}
- try{await db.doc("settings/company").set({profile:company,rate,currency});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
+ try{await db.doc("settings/company").set({profile:company,rate,currency,ghRepo,email:ownerEmail});$("ctxMsg").textContent="Saved. New steps use this context."}catch(_){$("ctxMsg").textContent="Couldn't save. It still applies for this visit."}});
 
 function renderFiles(){
  $("flist").innerHTML=codeFiles.map(f=>`<span class="chip">${esc(f.path)}</span>`).join("");
@@ -1079,8 +1110,344 @@ $("clearCode").addEventListener("click",()=>{codeFiles=[];saveFiles()});
 
 function showBanner(msg){const b=$("banner");b.textContent=msg;b.hidden=false;const c=$("conn");c.dataset.s="off";c.querySelector("span").textContent="Agents offline";$("assignBtn").disabled=true}
 
+/* ---------- 3D office (driven by the real work above) ---------- */
+function excerpt(s,n=120){
+ s=String(s||"").replace(/```[\s\S]*?```/g," ").replace(/\|[^\n]*\|/g," ").replace(/[#*_`>]/g," ").replace(/\s+/g," ").trim();
+ const m=s.match(/^(.{24,}?[.!?])(\s|$)/);let e=m?m[1]:s;if(e.length>n)e=e.slice(0,n-1).trim()+"…";return e}
+const Office3D=(function(){
+ const ROOM3={exec:{c:[0,0],r:[0,0],color:"#7F77DD"},product:{c:[1,2],r:[0,0],color:"#D4537E"},meet:{c:[3,3],r:[0,1],color:"#2c8ec4",door:"left",doorZ:1.6,name:"Meeting room",code:"RM 103"},
+  eng:{c:[0,1],r:[1,1],color:"#378ADD"},qa:{c:[2,2],r:[1,1],color:"#1D9E75"},ops:{c:[0,1],r:[2,2],color:"#D85A30"},biz:{c:[2,2],r:[2,2],color:"#639922"},cafe:{c:[3,3],r:[2,2],color:"#a0703c",door:"left",doorZ:8.6,name:"Cafe",code:"RM 303"}};
+ ROOMS.forEach(r=>{ROOM3[r.id].name=r.name;ROOM3[r.id].code=r.code});
+ const CREW=[{id:"you",name:"You",role:"Owner",room:"exec"}].concat(AGENTS.map(a=>({id:a.id,name:a.name,role:a.role,room:a.room})));
+ const C={};CREW.forEach(c=>C[c.id]=c);
+ const colorOf=id=>id==="you"?"#d39a24":ROOM3[C[id].room].color;
+ const SOCIAL=[
+  [["a","Coffee? I need a break from my screen."],["b","Yes please. Long morning."],["a","Same. Back in ten?"]],
+  [["a","How was your weekend?"],["b","Hiking, mostly. Yours?"],["a","Too much coding, honestly."]],
+  [["a","Is the espresso machine working again?"],["b","Fixed it this morning."],["a","Hero."]],
+  [["a","Did you try the new croissants?"],["b","Not yet. Are they good?"],["a","Dangerously good."]],
+  [["a","Fridays should be meeting-free."],["b","Agreed. Let's tell Atlas."]]];
+ let built=false,visible=false,raf=0,renderer,scene,overlay,camera,controls,meetTex,simTime=0,nextAmbient=25;
+ let meetState={title:"Meeting room",lines:[]};
+ const PEOPLE={},SEATS={},DOORS={},leds=[],pickables=[],active=[],state={working:null,status:{}};
+ const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+ function build(stage){
+  try{renderer=new THREE.WebGLRenderer({antialias:true})}catch(e){stage.insertAdjacentHTML("beforeend",`<div class="fallback3d">This browser can't show 3D graphics. Use the floor plan instead.</div>`);return false}
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  stage.prepend(renderer.domElement);
+  scene=new THREE.Scene();overlay=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(36,1,0.1,300);
+  const HOME=new THREE.Vector3(0,26,31),TOP=new THREE.Vector3(0,50,0.01);camera.position.copy(HOME);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.08;controls.maxPolarAngle=1.36;controls.minDistance=5;controls.maxDistance=90;controls.target.set(0,0,0.5);
+  const hemi=new THREE.HemisphereLight(0xffffff,0x7b8794,0.6);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xfff4e6,0.8);sun.position.set(-18,30,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-24,right:24,top:15,bottom:-15,near:2,far:90});sun.shadow.bias=-0.0006;scene.add(sun);
+  const fill=new THREE.DirectionalLight(0xcfe3ff,0.25);fill.position.set(18,14,-12);scene.add(fill);
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||"#cccccc";
+  const std=(color,o={})=>new THREE.MeshStandardMaterial(Object.assign({color,roughness:0.6,metalness:0.05},o));
+  const mesh=(geo,mat,sh=true)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=sh;m.receiveShadow=true;return m};
+  const box=(w,h,d,mat,x,y,z,sh=true,parent=scene)=>{const m=mesh(new THREE.BoxGeometry(w,h,d),mat,sh);m.position.set(x,y,z);parent.add(m);return m};
+  const canvasTex=(w,h,draw)=>{const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");draw(g,w,h);const t=new THREE.CanvasTexture(c);t.userData={c,g};return t};
+  const rr=(g,x,y,w,h,r)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()};
+  redraw=(t,draw)=>{const {c,g}=t.userData;g.clearRect(0,0,c.width,c.height);draw(g,c.width,c.height);t.needsUpdate=true};
+  RR=rr;
+
+  const T={floorMats:[],wallMat:std("#d6dde5",{roughness:0.9}),platMat:std("#c3ccd6",{roughness:0.95}),groundMat:std("#b4bfca",{roughness:1}),runnerMat:std("#aab6c2",{roughness:1})};
+  const floorTex=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#ffffff";g.fillRect(0,0,w,h);g.strokeStyle="rgba(0,0,0,0.07)";g.lineWidth=3;g.strokeRect(0,0,w,h)});floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;
+  function applyTheme(){const bg=new THREE.Color(css("--scene"));scene.background=bg;const dark=bg.getHSL({}).l<0.3;
+   T.groundMat.color.set(dark?"#0e1722":"#b4bfca");T.platMat.color.set(dark?"#1a2533":"#c6cfd8");T.wallMat.color.set(dark?"#26354a":"#d6dde5");T.runnerMat.color.set(dark?"#223043":"#b3bfcb");
+   T.floorMats.forEach(({mat,color})=>mat.color.copy(new THREE.Color(dark?"#1e2a39":"#e8ecf0").lerp(new THREE.Color(color),0.2)));
+   hemi.intensity=dark?0.42:0.5;sun.intensity=dark?0.45:0.78;fill.intensity=dark?0.18:0.25}
+  const X0=-20,Z0=-10.5,INSET=0.9,LANE=0.7;VX=10;
+  const rect=r=>({x0:X0+r.c[0]*10+INSET,x1:X0+(r.c[1]+1)*10-INSET,z0:Z0+r.r[0]*7+INSET,z1:Z0+(r.r[1]+1)*7-INSET});
+  Object.entries(ROOM3).forEach(([id,r])=>{const q=rect(r),cx=(q.x0+q.x1)/2;DOORS[id]=r.door==="left"?{inside:{x:q.x0+LANE,z:r.doorZ},outside:{x:VX,z:r.doorZ},h:false}:{inside:{x:cx,z:q.z1-LANE},outside:{x:cx,z:q.z1+INSET},h:true}});
+  const ground=mesh(new THREE.PlaneGeometry(200,150),T.groundMat,false);ground.rotation.x=-Math.PI/2;ground.position.y=-0.36;scene.add(ground);
+  box(41.4,0.36,23.2,T.platMat,0,-0.18,0.3,false);
+  [[-5,-3.5,30,1.3],[-5,3.5,30,1.3],[0,10.5,40,1.3]].forEach(([x,z,w,d])=>box(w,0.02,d,T.runnerMat,x,0.01,z,false));box(1.3,0.02,22,T.runnerMat,VX,0.012,0.3,false);
+  const SB="#0c1522";
+  const SCREENS={exec:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);g.fillStyle="#94a4b4";g.font="500 18px 'IBM Plex Mono',monospace";g.fillText("PROPOSALS AND RELEASES",22,36);g.fillStyle="#e4ebf2";g.font="600 26px 'Bricolage Grotesque',sans-serif";g.fillText("Waiting on the owner:",22,90);g.fillStyle="#f7c46c";g.fillText("approve or send changes",22,128)},
+   product:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);["#f7c46c","#ff9ec4","#9be59b","#7fb4ff"].forEach((c,i)=>{for(let k=0;k<3;k++){g.fillStyle=c;rr(g,14+i*124,30+k*46,110,34,6);g.fill()}})},
+   eng:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);const cols=["#7fb4ff","#f7c46c","#9be59b","#d7a2ff","#cfd8e1"];let y=26;for(let i=0;i<13;i++){let x=24+((i*37)%3)*22;for(let k=0;k<2+(i*7)%4;k++){const len=30+((i*13+k*29)%90);g.fillStyle=cols[(i+k)%5];g.fillRect(x,y,len,9);x+=len+10}y+=18}},
+   qa:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);g.font="500 18px 'IBM Plex Mono',monospace";["unit tests","integration","end-to-end","accessibility","load test"].forEach((t,i)=>{g.fillStyle="#cfd8e1";g.fillText(t,22,40+i*40);g.fillStyle="#5cc58b";rr(g,w-130,24+i*40,100,20,5);g.fill()})},
+   ops:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);g.strokeStyle="#7fb4ff";g.lineWidth=4;g.beginPath();for(let x=0;x<=w;x+=16){const y=h*0.55+Math.sin(x/38)*h*0.16;x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()},
+   biz:(g,w,h)=>{g.fillStyle=SB;g.fillRect(0,0,w,h);g.font="500 20px 'IBM Plex Sans',sans-serif";["Customer inbox","Release notes","Launch posts"].forEach((t,i)=>{g.fillStyle="#e4ebf2";g.fillText(t,22,60+i*56)})},
+   cafe:(g,w,h)=>{g.fillStyle="#1b1410";g.fillRect(0,0,w,h);g.fillStyle="#f3d9b1";g.font="600 34px 'Bricolage Grotesque',sans-serif";g.fillText("Today's menu",24,50);g.font="500 22px 'IBM Plex Sans',sans-serif";[["Espresso","2.50"],["Flat white","3.80"],["Matcha latte","4.20"],["Croissant","3.00"]].forEach(([n,p],i)=>{g.fillStyle="#e9dccb";g.fillText(n,24,100+i*42);g.fillStyle="#f7c46c";g.fillText("$"+p,w-110,100+i*42)})}};
+  const frameMat=std("#a9b4c0",{metalness:0.7,roughness:0.3}),deskMat=std("#d8b98f",{roughness:0.55}),chairMat=std("#2b3646",{roughness:0.7}),woodMat=std("#a87b4f",{roughness:0.6});
+  function glassWall(ax,az,bx,bz,color,doorAt,doorW){const len=Math.hypot(bx-ax,bz-az),horiz=Math.abs(bz-az)<1e-6,H=1.25,dx=Math.sign(bx-ax),dz=Math.sign(bz-az);
+   const glass=new THREE.MeshPhysicalMaterial({color,transparent:true,opacity:0.16,roughness:0.05,clearcoat:1,side:THREE.DoubleSide,depthWrite:false});
+   (doorW?[[0,doorAt-doorW/2],[doorAt+doorW/2,len]]:[[0,len]]).forEach(([s,e])=>{if(e-s<0.05)return;const l=e-s,mid=(s+e)/2,px=horiz?ax+dx*mid:ax,pz=horiz?az:az+dz*mid;
+    const g=new THREE.Mesh(new THREE.PlaneGeometry(l,H),glass);if(!horiz)g.rotation.y=Math.PI/2;g.position.set(px,0.06+H/2,pz);g.renderOrder=2;scene.add(g);
+    box(horiz?l:0.05,0.05,horiz?0.05:l,frameMat,px,0.06+H,pz,false);
+    const posts=Math.max(1,Math.round(l/2.4));for(let k=0;k<=posts;k++){const t=s+l*k/posts;box(0.07,H,0.07,frameMat,horiz?ax+dx*t:ax,0.06+H/2,horiz?az:az+dz*t,false)}})}
+  function plant(x,z,s=1){box(0.42*s,0.42*s,0.42*s,std("#e9e2d6",{roughness:0.8}),x,0.27*s,z);const leaf=std("#4f8a3a",{roughness:0.7,flatShading:true});[[0,0.75,0,0.34],[0.16,0.62,0.1,0.26],[-0.15,0.66,-0.08,0.27]].forEach(([dx,dy,dz,r])=>{const m=mesh(new THREE.IcosahedronGeometry(r*s,0),leaf);m.position.set(x+dx*s,dy*s,z+dz*s);scene.add(m)})}
+  function rack(x,z,ledColor){box(0.75,1.75,0.62,std("#1d2733",{metalness:0.5,roughness:0.35}),x,0.94,z);for(let row=0;row<8;row++)for(let col=0;col<3;col++){const m=new THREE.MeshStandardMaterial({color:0x111111,emissive:new THREE.Color(ledColor),emissiveIntensity:1});const led=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.04,0.02),m);led.position.set(x-0.2+col*0.2,0.3+row*0.19,z+0.32);scene.add(led);leds.push({m,phase:Math.random()*10,speed:0.6+Math.random()*2.4})}}
+  function chair(x,z,yaw){const g=new THREE.Group();g.position.set(x,0.06,z);g.rotation.y=yaw;scene.add(g);const seat=mesh(new THREE.BoxGeometry(0.52,0.07,0.5),chairMat);seat.position.y=0.5;g.add(seat);const back=mesh(new THREE.BoxGeometry(0.5,0.56,0.06),chairMat);back.position.set(0,0.8,-0.27);g.add(back);const pole=mesh(new THREE.CylinderGeometry(0.03,0.03,0.42,8),frameMat,false);pole.position.y=0.27;g.add(pole)}
+  function desk(x,z,color){const g=new THREE.Group();g.position.set(x,0.06,z+0.85);scene.add(g);const top=mesh(new THREE.BoxGeometry(1.75,0.06,0.82),deskMat);top.position.y=0.74;g.add(top);
+   [[-0.8,-0.34],[0.8,-0.34],[-0.8,0.34],[0.8,0.34]].forEach(([lx,lz])=>{const l=mesh(new THREE.BoxGeometry(0.05,0.72,0.05),frameMat,false);l.position.set(lx,0.36,lz);g.add(l)});
+   const mon=mesh(new THREE.BoxGeometry(0.8,0.46,0.04),std("#151c26",{metalness:0.3,roughness:0.4}));mon.position.set(0,1.06,0.2);g.add(mon);
+   const kb=mesh(new THREE.BoxGeometry(0.5,0.025,0.16),std("#dfe5ea"),false);kb.position.set(0,0.785,-0.14);g.add(kb);
+   const mug=mesh(new THREE.CylinderGeometry(0.05,0.05,0.1,14),std(color),false);mug.position.set(0.62,0.82,-0.1);g.add(mug);chair(x,z,0)}
+  Object.entries(ROOM3).forEach(([id,r])=>{
+   const q=rect(r),w=q.x1-q.x0,d=q.z1-q.z0,cx=(q.x0+q.x1)/2,cz=(q.z0+q.z1)/2;
+   const fm=std("#ffffff",{roughness:0.85,map:floorTex.clone()});fm.map.needsUpdate=true;fm.map.repeat.set(w/1.2,d/1.2);T.floorMats.push({mat:fm,color:r.color});
+   box(w,0.06,d,fm,cx,0.03,cz,false);box(w,2.3,0.14,T.wallMat,cx,1.21,q.z0,true);
+   const stripe=mesh(new THREE.BoxGeometry(w,0.06,0.16),std(r.color,{emissive:new THREE.Color(r.color),emissiveIntensity:0.25}),false);stripe.position.set(cx,2.38,q.z0);scene.add(stripe);
+   const signTex=canvasTex(512,96,(g,W,H)=>{g.fillStyle=r.color;rr(g,0,0,W,H,14);g.fill();g.fillStyle="#ffffff";g.font="600 44px 'Bricolage Grotesque',sans-serif";g.textBaseline="middle";g.fillText(r.name,24,H/2+2);g.font="500 26px 'IBM Plex Mono',monospace";g.textAlign="right";g.fillText(r.code,W-22,H/2+2)});
+   const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.49),new THREE.MeshStandardMaterial({map:signTex,roughness:0.5}));sign.position.set(q.x0+1.55,1.98,q.z0+0.08);scene.add(sign);
+   if(r.door==="left"){glassWall(q.x0,q.z0,q.x0,q.z1,r.color,r.doorZ-q.z0,1.6);glassWall(q.x1,q.z0,q.x1,q.z1,r.color);glassWall(q.x0,q.z1,q.x1,q.z1,r.color)}
+   else{glassWall(q.x0,q.z0,q.x0,q.z1,r.color);glassWall(q.x1,q.z0,q.x1,q.z1,r.color);glassWall(q.x0,q.z1,q.x1,q.z1,r.color,w/2,1.6)}
+   const isMeet=id==="meet",isCafe=id==="cafe";
+   const sw=isMeet?3.2:isCafe?2.4:id==="exec"?2.3:Math.min(3.0,w*0.34),sh=sw*(isCafe?0.5:0.56),sx=isMeet?cx+0.6:isCafe?cx+1.2:q.x1-0.35-sw/2,sy=isCafe?1.72:1.2;
+   const tex=isMeet?(meetTex=canvasTex(640,360,drawMeet)):canvasTex(512,isCafe?256:288,(g,W,H)=>SCREENS[id](g,W,H));
+   box(sw+0.12,sh+0.12,0.06,std("#10161e",{metalness:0.4,roughness:0.4}),sx,sy,q.z0+0.09,false);
+   const scr=new THREE.Mesh(new THREE.PlaneGeometry(sw,sh),new THREE.MeshStandardMaterial({color:0x000000,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:0.95,roughness:0.3}));scr.position.set(sx,sy,q.z0+0.125);scene.add(scr);
+   if(id==="exec")plant(q.x1-0.6,q.z1-0.6,1.1);
+   if(id==="product"||id==="eng"){plant(q.x0+0.6,q.z1-0.6);plant(q.x1-0.6,q.z1-0.6)}
+   if(id==="qa"){rack(q.x0+0.7,q.z0+0.5,"#5cc58b");plant(q.x1-0.6,q.z1-0.6)}
+   if(id==="ops"){rack(q.x0+0.7,q.z0+0.5,"#4aa8ff");rack(q.x0+1.55,q.z0+0.5,"#5cc58b");plant(q.x1-0.6,q.z1-0.6)}
+   if(id==="biz")plant(q.x1-0.6,q.z1-0.6);
+   if(isMeet){const tz=cz-0.4;box(2.0,0.08,6.6,woodMat,cx,0.8,tz);[[-0.8,-3],[0.8,-3],[-0.8,3],[0.8,3]].forEach(([lx,lz])=>box(0.08,0.72,0.08,frameMat,cx+lx,0.42,tz+lz,false));
+    const seats=[{x:cx,z:tz-3.85,yaw:0,lane:"head"},{x:cx,z:tz+3.85,yaw:Math.PI,lane:"foot"}];[-2.4,-1.2,0,1.2,2.4].forEach(v=>{seats.push({x:cx-1.5,z:tz+v,yaw:Math.PI/2,lane:"left"});seats.push({x:cx+1.5,z:tz+v,yaw:-Math.PI/2,lane:"right"})});
+    seats.forEach(s=>chair(s.x,s.z,s.yaw));SEATS.meet=seats;SEATS.meetGeo={lx:q.x0+1.4,rx:q.x1-0.6};plant(q.x0+0.5,q.z0+0.6,1.1);plant(q.x1-0.5,q.z0+0.6,1.1)}
+   if(isCafe){box(5.2,1.0,0.7,woodMat,cx+1.0,0.56,q.z0+0.55);box(5.3,0.06,0.78,std("#e9e4dc",{roughness:0.4}),cx+1.0,1.09,q.z0+0.55);box(0.6,0.55,0.45,std("#2a2f36",{metalness:0.6,roughness:0.3}),cx-0.6,1.4,q.z0+0.5);
+    const tables=[{x:q.x0+2.4,z:cz+0.4},{x:cx+1.0,z:cz+1.3},{x:q.x1-1.3,z:cz-0.4}];
+    tables.forEach(t=>{const top=mesh(new THREE.CylinderGeometry(0.42,0.42,0.05,28),std("#e9e4dc",{roughness:0.4}));top.position.set(t.x,1.06,t.z);scene.add(top);const pole=mesh(new THREE.CylinderGeometry(0.04,0.04,1.0,10),frameMat,false);pole.position.set(t.x,0.56,t.z);scene.add(pole);
+     t.spots=[{x:t.x-0.82,z:t.z,yaw:Math.PI/2},{x:t.x,z:t.z+0.82,yaw:Math.PI},{x:t.x+0.82,z:t.z,yaw:-Math.PI/2}]});
+    SEATS.cafe=tables;SEATS.cafeLane=q.z1-0.45;plant(q.x1-0.5,q.z1-0.5,1.0)}
+  });
+  applyTheme();matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+  /* people */
+  const SKIN=["#f1c7a5","#c68b62","#8d5a3b","#e8b893","#a86b45","#f3d2b6","#6e4329"],HAIR=["#2b1d14","#151515","#6b4423","#d9b46a","#3a2a22","#8a8a8a","#4a3020","#b5562a"];
+  function label(text,color){const W=256,H=64;const tex=canvasTex(W,H,g=>{g.font="600 30px 'Bricolage Grotesque','Segoe UI',sans-serif";const w=Math.min(W-4,g.measureText(text).width+34),x=(W-w)/2;g.fillStyle="rgba(14,21,31,0.85)";rr(g,x,6,w,H-12,14);g.fill();g.fillStyle=color;g.fillRect(x+12,H-12,w-24,3);g.fillStyle="#ffffff";g.textAlign="center";g.textBaseline="middle";g.fillText(text,W/2,H/2)});
+   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));sp.scale.set(1.5,0.375,1);return sp}
+  ROOMS.forEach(r=>{const r3=ROOM3[r.id],q=rect(r3),list=CREW.filter(c=>c.room===r.id),n=list.length,cz=(q.z0+q.z1)/2;
+   list.forEach((c,i)=>{const x=q.x0+(q.x1-q.x0)*(i+1)/(n+1)+(r.id==="exec"?-0.7:0),z=cz-0.55;desk(x,z,colorOf(c.id));makePerson(c,CREW.indexOf(c),{x,z})})});
+  function makePerson(c,i,seat){
+   const color=colorOf(c.id),root=new THREE.Group();root.position.set(seat.x,0.06,seat.z);scene.add(root);const body=new THREE.Group();root.add(body);
+   const shirt=std(color,{roughness:0.72}),pants=std(["#2f3a4a","#3b3f46","#2c2f38","#4a4f5c"][i%4],{roughness:0.8}),skin=std(SKIN[i%SKIN.length]),hairM=std(HAIR[i%HAIR.length],{roughness:0.85}),shoe=std("#1d232b");
+   const legs=[-1,1].map(s=>{const hip=new THREE.Group();hip.position.set(s*0.1,0.9,0);body.add(hip);const th=mesh(new THREE.CylinderGeometry(0.078,0.066,0.44,10),pants);th.position.y=-0.22;hip.add(th);const knee=new THREE.Group();knee.position.y=-0.44;hip.add(knee);const sh=mesh(new THREE.CylinderGeometry(0.062,0.05,0.42,10),pants);sh.position.y=-0.21;knee.add(sh);const f=mesh(new THREE.BoxGeometry(0.1,0.06,0.22),shoe);f.position.set(0,-0.43,0.05);knee.add(f);return{hip,knee}});
+   const pelvis=mesh(new THREE.CylinderGeometry(0.165,0.155,0.16,14),pants);pelvis.position.y=0.93;body.add(pelvis);
+   const torso=mesh(new THREE.CylinderGeometry(0.19,0.165,0.56,14),shirt);torso.position.y=1.18;body.add(torso);
+   const shoulders=mesh(new THREE.SphereGeometry(0.19,14,8),shirt);shoulders.scale.set(1.18,0.45,0.85);shoulders.position.y=1.44;body.add(shoulders);
+   const head=new THREE.Group();head.position.y=1.67;body.add(head);
+   const skull=mesh(new THREE.SphereGeometry(0.13,18,14),skin);skull.scale.set(0.95,1.08,1);head.add(skull);
+   const hair=mesh(new THREE.SphereGeometry(0.138,18,10,0,Math.PI*2,0,Math.PI*0.52),hairM);hair.position.set(0,0.025,-0.012);head.add(hair);
+   const eyeM=std("#1a1a1a");[-1,1].forEach(s=>{const e=mesh(new THREE.SphereGeometry(0.016,8,6),eyeM,false);e.position.set(s*0.045,0.015,0.12);head.add(e)});
+   if(c.id==="you"){const crown=mesh(new THREE.TorusGeometry(0.1,0.022,8,20),std("#e9b949",{metalness:0.8,roughness:0.25}));crown.rotation.x=Math.PI/2;crown.position.y=0.15;head.add(crown)}
+   const arms=[-1,1].map(s=>{const sh=new THREE.Group();sh.position.set(s*0.235,1.42,0);sh.rotation.z=s*0.08;body.add(sh);const up=mesh(new THREE.CylinderGeometry(0.052,0.046,0.3,10),shirt);up.position.y=-0.15;sh.add(up);const el=new THREE.Group();el.position.y=-0.3;sh.add(el);const fo=mesh(new THREE.CylinderGeometry(0.044,0.038,0.27,10),skin);fo.position.y=-0.135;el.add(fo);const hand=mesh(new THREE.SphereGeometry(0.046,10,8),skin);hand.position.y=-0.29;el.add(hand);return{sh,el}});
+   [torso,shoulders,skull,hair,pelvis].forEach(m=>{m.userData.id=c.id;pickables.push(m)});
+   const name=label(c.name,color);overlay.add(name);
+   const bTex=canvasTex(512,200,()=>{});const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:bTex,depthTest:false,transparent:true,opacity:0}));bubble.scale.set(4.0,1.5625,1);overlay.add(bubble);
+   const ring=new THREE.Mesh(new THREE.RingGeometry(0.62,0.78,40),new THREE.MeshBasicMaterial({color:0x2ec27e,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.set(seat.x,0.075,seat.z);scene.add(ring);
+   PEOPLE[c.id]={id:c.id,root,body,legs,arms,head,name,bubble,bTex,ring,color,deskSeat:{x:seat.x,z:seat.z},mode:"desk",path:[],onArrive:null,finalYaw:0,finalPose:"sit",pose:{hip:-1.45,knee:1.45,sh:-0.7,el:-0.9,y:-0.33},target:"sit",yaw:0,phase:Math.random()*6,speaking:0,bubbleT:0,look:null,busy:false,walkPhase:0}}
+
+  /* interaction */
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),tip=stage.querySelector(".tip3d");let downAt=null;
+  const pick=ev=>{const r=renderer.domElement.getBoundingClientRect();mouse.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObjects(pickables,false)[0];return h&&h.object.userData.id};
+  renderer.domElement.addEventListener("pointerdown",e=>{downAt=[e.clientX,e.clientY]});
+  renderer.domElement.addEventListener("pointerup",e=>{if(!downAt)return;const mv=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(mv>6)return;const id=pick(e);if(id&&A[id]){selAgent=id;render()}});
+  renderer.domElement.addEventListener("pointermove",e=>{const id=e.pointerType==="mouse"?pick(e):null;renderer.domElement.style.cursor=id?"pointer":"grab";if(id&&tip){const r=stage.getBoundingClientRect();tip.hidden=false;tip.innerHTML=`<b>${C[id].name}</b>${doing(id)}`;tip.style.left=(e.clientX-r.left)+"px";tip.style.top=(e.clientY-r.top)+"px"}else if(tip)tip.hidden=true});
+  renderer.domElement.addEventListener("pointerleave",()=>{if(tip)tip.hidden=true});
+  const fit=v=>v.clone().multiplyScalar(Math.max(1,1.6/camera.aspect));
+  let camGoal=null,focusOn=null;
+  topView=()=>{camGoal=fit(TOP);focusOn=new THREE.Vector3(0,0,0.5)};resetView=()=>{camGoal=fit(HOME);focusOn=new THREE.Vector3(0,0,0.5)};
+  const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
+  new ResizeObserver(resize).observe(stage);resize();camera.position.copy(fit(HOME));
+  const clock=new THREE.Clock();
+  frame=()=>{raf=0;if(!visible)return;
+   const dt=Math.min(clock.getDelta(),0.05),now=clock.elapsedTime;simTime+=dt;
+   ambient();active.slice().forEach(ep=>updateEpisode(ep,dt));
+   Object.values(PEOPLE).forEach(p=>updatePerson(p,dt,now));
+   leds.forEach(l=>{l.m.emissiveIntensity=Math.sin(now*l.speed+l.phase)>0.2?1.4:0.12});
+   if(camGoal){camera.position.lerp(camGoal,0.07);if(camera.position.distanceTo(camGoal)<0.05)camGoal=null}
+   if(focusOn){controls.target.lerp(focusOn,0.08);if(controls.target.distanceTo(focusOn)<0.02)focusOn=null}
+   controls.update();renderer.render(scene,camera);renderer.autoClear=false;renderer.render(overlay,camera);renderer.autoClear=true;
+   raf=requestAnimationFrame(frame)};
+  return true}
+ let redraw=()=>{},RR=null,VX=10,frame=()=>{},topView=()=>{},resetView=()=>{};
+
+ function drawMeet(g,w,h){g.fillStyle="#0c1522";g.fillRect(0,0,w,h);g.fillStyle="#7fb4ff";g.font="500 18px 'IBM Plex Mono',monospace";g.fillText(meetState.lines.length||meetState.on?"IN SESSION":"AVAILABLE",24,38);
+  g.fillStyle="#ffffff";g.font="600 30px 'Bricolage Grotesque',sans-serif";g.fillText(meetState.title.slice(0,32),24,80);
+  g.font="400 19px 'IBM Plex Sans',sans-serif";meetState.lines.slice(-5).forEach(([id,t],i)=>{g.fillStyle=colorOf(id);g.fillText(C[id].name,24,124+i*30);g.fillStyle="#cfd8e1";g.fillText(t.length>44?t.slice(0,43)+"…":t,110,124+i*30)})}
+ function wrap(g,text,max){const words=text.split(" "),lines=[];let cur="";words.forEach(w=>{const t=cur?cur+" "+w:w;if(g.measureText(t).width>max&&cur){lines.push(cur);cur=w}else cur=t});if(cur)lines.push(cur);
+  if(lines.length>3){lines.length=3;lines[2]=lines[2].replace(/\s*\S*$/,"")+"…"}return lines}
+ function drawBubble(g,W,H,text,color){g.font="500 28px 'IBM Plex Sans','Segoe UI',sans-serif";const lines=wrap(g,text,W-70);
+  const bw=Math.min(W-8,Math.max(...lines.map(l=>g.measureText(l).width))+48),bh=lines.length*36+30,x=(W-bw)/2,y=H-bh-26;
+  g.fillStyle="#ffffff";RR(g,x,y,bw,bh,22);g.fill();g.beginPath();g.moveTo(W/2-16,y+bh-1);g.lineTo(W/2,H-6);g.lineTo(W/2+16,y+bh-1);g.closePath();g.fill();
+  g.strokeStyle=color;g.lineWidth=5;RR(g,x,y,bw,bh,22);g.stroke();g.fillStyle="#15202b";g.textBaseline="middle";g.textAlign="center";lines.forEach((l,i)=>g.fillText(l,W/2,y+30+i*36))}
+
+ /* routing */
+ const pt=(x,z)=>({x,z}),roomOf=id=>C[id].room,seatOf=id=>PEOPLE[id].deskSeat,lane=room=>DOORS[room].inside.z;
+ const clean=pts=>pts.filter((p,i)=>i===0||Math.hypot(p.x-pts[i-1].x,p.z-pts[i-1].z)>0.01);
+ const leaveDesk=id=>{const s=seatOf(id);return[pt(s.x,s.z),pt(s.x+1.05,s.z),pt(s.x+1.05,lane(roomOf(id)))]};
+ function corridor(from,to){if(from===to)return[];const a=DOORS[from],b=DOORS[to],pts=[a.inside,a.outside];if(!(a.h&&b.h&&a.outside.z===b.outside.z)){pts.push(a.h?pt(VX,a.outside.z):a.outside);pts.push(b.h?pt(VX,b.outside.z):b.outside)}pts.push(b.outside,b.inside);return pts}
+ function routeToMeeting(id,seat){const g=SEATS.meetGeo,d=DOORS.meet.inside;const tail=seat.lane==="right"?[pt(g.rx-0.5,d.z),pt(g.rx-0.5,seat.z),pt(seat.x,seat.z)]:seat.lane==="foot"?[pt(seat.x,d.z),pt(seat.x,seat.z)]:[pt(g.lx,d.z),pt(g.lx,seat.z),pt(seat.x,seat.z)];return clean(leaveDesk(id).concat(corridor(roomOf(id),"meet"),tail))}
+ function routeToCafe(id,spot){const d=DOORS.cafe.inside;return clean(leaveDesk(id).concat(corridor(roomOf(id),"cafe"),[pt(d.x,SEATS.cafeLane),pt(spot.x,SEATS.cafeLane),pt(spot.x,spot.z)]))}
+ function routeToDesk(id,host){const h=seatOf(host),spot=pt(h.x+1.05,h.z+0.25);return clean(leaveDesk(id).concat(roomOf(id)===roomOf(host)?[]:corridor(roomOf(id),roomOf(host)),[pt(spot.x,lane(roomOf(host))),spot]))}
+ function walk(p,path,yaw,pose,cb){p.path=path.slice();p.mode="walk";p.target="walk";p.finalYaw=yaw;p.finalPose=pose;p.onArrive=cb}
+ function goHome(p,path,cb){walk(p,path.slice().reverse(),0,"sit",()=>{p.mode="desk";p.busy=false;cb&&cb()})}
+
+ /* episodes */
+ const LINE_SECS=4.2;
+ function doing(id){const p=PEOPLE[id];if(!p)return"";const ep=active.find(e=>e.people.includes(id));
+  if(state.working===id)return"Working on it now";if(ep)return ep.type==="meeting"?`In the meeting room: ${ep.title}`:ep.type==="cafe"?"Having coffee in the cafe":`Talking at ${C[ep.host].name}'s desk`;return"At their desk"}
+ function sayNow(id,text){const p=PEOPLE[id];if(!p)return;p.speaking=LINE_SECS*0.9;p.bubbleT=LINE_SECS*1.4;redraw(p.bTex,(g,W,H)=>drawBubble(g,W,H,text,p.color));
+  const ep=active.find(e=>e.people.includes(id));if(ep)ep.people.forEach(o=>{if(o!==id&&PEOPLE[o])PEOPLE[o].look=id});
+  if(ep&&ep.type==="meeting"){meetState.lines.push([id,text]);redraw(meetTex,drawMeet)}}
+ function joinMeeting(ep,id){
+  const p=PEOPLE[id];if(!p||ep.joined.has(id))return;ep.joined.add(id);p.busy=true;
+  const seats=SEATS.meet,rest=ep.people.filter(x=>x!=="atlas"&&x!=="you");const seat=id==="atlas"?seats[0]:id==="you"?seats[1]:seats[2+(rest.indexOf(id)%10)];
+  const path=routeToMeeting(id,seat);ep.paths[id]=path;walk(p,path,seat.yaw,"sit",()=>{ep.arrived.add(id);p.mode="meeting"})}
+ function startMeeting(people,title){
+  const ep={type:"meeting",title,people:people.filter(id=>PEOPLE[id]),phase:"gather",t:0,arrived:new Set(),joined:new Set(),paths:{},lines:[],lineT:0,ending:false};
+  active.push(ep);meetState={title,lines:[],on:true};redraw(meetTex,drawMeet);return ep}
+ function startCafe(ids){
+  const t=SEATS.cafe[Math.floor(Math.random()*SEATS.cafe.length)],script=SOCIAL[Math.floor(Math.random()*SOCIAL.length)];
+  const ep={type:"cafe",title:"Coffee break",people:ids,phase:"gather",t:0,arrived:new Set(),paths:{},lines:script.map(([w,txt])=>[w==="a"?ids[0]:ids[1],txt]),lineT:0};
+  ids.forEach((id,k)=>{const p=PEOPLE[id],spot=t.spots[k%3];p.busy=true;const path=routeToCafe(id,spot);ep.paths[id]=path;walk(p,path,spot.yaw,"stand",()=>{ep.arrived.add(id);p.mode="cafe"})});
+  active.push(ep)}
+ function startVisit(from,to,lines){
+  const v=PEOPLE[from],h=seatOf(to),path=routeToDesk(from,to),end=path[path.length-1];
+  const ep={type:"visit",title:"Handoff",host:to,people:[from,to],phase:"gather",t:0,arrived:new Set([to]),paths:{[from]:path},lines,lineT:0};
+  v.busy=true;PEOPLE[to].busy=true;walk(v,path,Math.atan2(h.x-end.x,h.z-end.z),"stand",()=>{ep.arrived.add(from);v.mode="visit"});active.push(ep)}
+ function finish(ep){
+  ep.phase="leave";ep.home=0;
+  ep.people.forEach(id=>{const p=PEOPLE[id];if(!p)return;p.look=null;
+   if(ep.paths[id])goHome(p,ep.paths[id],()=>{ep.home++});else{p.busy=false;ep.home++}});
+  if(ep.type==="meeting"){meetState={title:"Meeting room",lines:[]};redraw(meetTex,drawMeet)}}
+ function updateEpisode(ep,dt){
+  ep.t+=dt;
+  if(ep.type==="meeting"&&ep.phase!=="leave")ep.people.forEach(id=>{if(!ep.joined.has(id)&&PEOPLE[id]&&!PEOPLE[id].busy)joinMeeting(ep,id)});
+  const need=ep.type==="meeting"?ep.joined.size:ep.people.length;
+  if(ep.phase==="gather"&&(ep.arrived.size>=need&&need>0||ep.t>45))ep.phase="talk";
+  if(ep.phase==="talk"){ep.lineT-=dt;
+   if(ep.lineT<=0&&ep.lines.length){const [id,text]=ep.lines.shift();sayNow(id,text);ep.lineT=LINE_SECS}
+   else if(ep.lineT<=0&&!ep.lines.length&&(ep.type!=="meeting"||ep.ending))finish(ep)}
+  if(ep.phase==="leave"&&ep.home>=ep.people.length)active.splice(active.indexOf(ep),1)}
+ function ambient(){
+  if(simTime<nextAmbient||active.some(e=>e.type==="cafe"))return;nextAmbient=simTime+30+Math.random()*30;
+  const idle=CREW.map(c=>c.id).filter(id=>id!=="you"&&!PEOPLE[id].busy&&state.working!==id&&!state.status[id]&&!active.some(e=>e.people.includes(id)));
+  if(idle.length<2)return;idle.sort(()=>Math.random()-0.5);startCafe(idle.slice(0,2))}
+
+ /* animation */
+ const POSES={sit:{hip:-1.45,knee:1.45,sh:-0.7,el:-0.9,y:-0.33},sitTalk:{hip:-1.45,knee:1.45,sh:-0.15,el:-0.5,y:-0.33},stand:{hip:0,knee:0,sh:0.05,el:-0.15,y:0},walk:{hip:0,knee:0,sh:0,el:-0.25,y:0}};
+ const lerp=(a,b,k)=>a+(b-a)*k,angleLerp=(a,b,k)=>{const d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*k};
+ function updatePerson(p,dt,now){
+  if(p.mode==="walk"){const tgt=p.path[0];
+   if(!tgt){p.mode="arrived";p.target=p.finalPose;p.yawGoal=p.finalYaw;const cb=p.onArrive;p.onArrive=null;cb&&cb()}
+   else{const dx=tgt.x-p.root.position.x,dz=tgt.z-p.root.position.z,dist=Math.hypot(dx,dz),step=1.7*dt;
+    if(dist<=step){p.root.position.x=tgt.x;p.root.position.z=tgt.z;p.path.shift()}else{p.root.position.x+=dx/dist*step;p.root.position.z+=dz/dist*step}
+    p.yawGoal=Math.atan2(dx,dz);p.walkPhase+=dt*7.1}}
+  if(p.yawGoal!==undefined)p.yaw=angleLerp(p.yaw,p.yawGoal,1-Math.exp(-dt*10));p.root.rotation.y=p.yaw;
+  const seated=(p.mode==="desk"||p.mode==="meeting"||(p.mode==="arrived"&&p.finalPose==="sit"))&&p.target!=="walk";
+  const goal=p.target==="walk"?POSES.walk:seated?(p.speaking>0?POSES.sitTalk:POSES.sit):POSES.stand;
+  const k=1-Math.exp(-dt*9);Object.keys(goal).forEach(key=>p.pose[key]=lerp(p.pose[key],goal[key],k));
+  let hL=p.pose.hip,hR=p.pose.hip,kL=p.pose.knee,kR=p.pose.knee,sL=p.pose.sh,sR=p.pose.sh,eL=p.pose.el,eR=p.pose.el,bob=0;
+  if(p.mode==="walk"&&!reduced){const s=Math.sin(p.walkPhase);hL+=s*0.5;hR-=s*0.5;kL+=Math.max(0,-s)*0.7;kR+=Math.max(0,s)*0.7;sL-=s*0.45;sR+=s*0.45;bob=Math.abs(Math.cos(p.walkPhase))*0.035}
+  const typing=p.mode==="desk"&&!reduced&&p.speaking<=0,fast=state.working===p.id;
+  if(typing){eL+=Math.sin(now*(fast?20:12)+p.phase)*(fast?0.12:0.06);eR+=Math.sin(now*(fast?20:12)+p.phase+Math.PI)*(fast?0.12:0.06)}
+  if(p.speaking>0&&!reduced){eR+=-0.45+Math.sin(now*5+p.phase)*0.35;sR-=0.25}
+  p.legs[0].hip.rotation.x=hL;p.legs[1].hip.rotation.x=hR;p.legs[0].knee.rotation.x=kL;p.legs[1].knee.rotation.x=kR;
+  p.arms[0].sh.rotation.x=sL;p.arms[1].sh.rotation.x=sR;p.arms[0].el.rotation.x=eL;p.arms[1].el.rotation.x=eR;
+  p.body.position.y=p.pose.y+bob;
+  let hy=0,hx=typing?0.22:0;
+  if(p.look&&PEOPLE[p.look]){const o=PEOPLE[p.look].root.position;let rel=Math.atan2(o.x-p.root.position.x,o.z-p.root.position.z)-p.yaw;rel=Math.atan2(Math.sin(rel),Math.cos(rel));hy=Math.max(-1.1,Math.min(1.1,rel));hx=0}
+  p.head.rotation.y=lerp(p.head.rotation.y,hy,1-Math.exp(-dt*6));p.head.rotation.x=lerp(p.head.rotation.x,hx,1-Math.exp(-dt*6));
+  p.speaking=Math.max(0,p.speaking-dt);p.bubbleT=Math.max(0,p.bubbleT-dt);
+  const rp=p.root.position,top=rp.y+p.pose.y+1.67;p.name.position.set(rp.x,top+0.42,rp.z);p.bubble.position.set(rp.x,top+1.45,rp.z);
+  p.bubble.material.opacity=lerp(p.bubble.material.opacity,p.bubbleT>0?1:0,1-Math.exp(-dt*10));p.bubble.visible=p.bubble.material.opacity>0.02;
+  const st=state.status[p.id],ringOn=state.working===p.id||st==="approval";
+  p.ring.material.color.set(st==="approval"?0xf0b04a:0x2ec27e);p.ring.material.opacity=lerp(p.ring.material.opacity,ringOn?(reduced?0.9:0.55+0.35*Math.sin(now*4)):0,1-Math.exp(-dt*8))}
+
+ /* public API: the runners call these as the real work happens */
+ const api={
+  get built(){return built},
+  show(stage){visible=true;if(!built){if(!window.THREE||!THREE.OrbitControls){stage.insertAdjacentHTML("beforeend",`<div class="fallback3d">The 3D view couldn't load here. Use the floor plan instead.</div>`);return false}built=build(stage);if(!built)return false}
+   if(!raf)raf=requestAnimationFrame(frame);return true},
+  hide(){visible=false;if(raf){cancelAnimationFrame(raf);raf=0}},
+  top(){topView()},reset(){resetView()},
+  work(id){state.working=id},
+  idle(){state.working=null},
+  status(id,s){if(s)state.status[id]=s;else delete state.status[id]},
+  say(id,text){if(!built)return;const ep=active.find(e=>e.people.includes(id)&&e.phase!=="leave");
+   if(ep&&ep.type==="meeting"&&ep.phase!=="talk"){ep.lines.push([id,text]);return}sayNow(id,text)},
+  handoff(from,to,text,reply){if(!built||!PEOPLE[from]||!PEOPLE[to]||from===to)return;
+   const lines=[[from,text]].concat(reply?[[to,reply]]:[]);
+   if(PEOPLE[from].busy||PEOPLE[to].busy||active.some(e=>e.people.includes(from)||e.people.includes(to))){sayNow(from,text);return}
+   startVisit(from,to,lines)},
+  meeting(people,title,opening){if(!built)return;
+   active.filter(e=>e.type==="cafe"&&e.phase!=="leave"&&e.people.some(id=>people.includes(id))).forEach(finish);let ep=active.find(e=>e.type==="meeting"&&e.phase!=="leave");if(ep){ep.title=title;people.forEach(id=>{if(!ep.people.includes(id))ep.people.push(id)})}else ep=startMeeting(people,title);if(opening)ep.lines.push(["atlas",opening])},
+  endMeeting(closing){if(!built)return;const ep=active.find(e=>e.type==="meeting"&&e.phase!=="leave");if(!ep)return;if(closing)ep.lines.push(["atlas",closing]);ep.ending=true}};
+ return api})();
+
+function setView(v){
+ try{localStorage.setItem("office-view",v?"3d":"2d")}catch(_){}
+ $("v3d").setAttribute("aria-pressed",String(v));$("v2d").setAttribute("aria-pressed",String(!v));
+ $("stage3d").hidden=!v;$("floor").hidden=v;$("legend2d").hidden=v;$("viewTools").hidden=!v;
+ if(v)Office3D.show($("stage3d"));else Office3D.hide()}
+$("v3d").addEventListener("click",()=>setView(true));$("v2d").addEventListener("click",()=>setView(false));
+$("vTop").addEventListener("click",()=>Office3D.top());$("vReset").addEventListener("click",()=>Office3D.reset());
+/* ---------- outside actions: GitHub, Gmail, Calendar (through the office runner) ---------- */
+const RUNNER="trig_01HmXtmKbzwYJSqWBnCQGRoq";
+const ships=new Map(),outbox=new Map();let ghRepo="KadiyalaManoj/AI-office",ownerEmail="",mcpApi=null;
+function hasCode(t){return(t.outputs||[]).some(o=>o&&CODERS.includes(o.agent)&&/File:/.test(o.text))}
+async function pokeRunner(note){
+ try{if(!mcpApi)mcpApi=await window.claude.use("mcp");if(!mcpApi)throw{code:"unavailable"};
+  await mcpApi.callTool("Claude Code Remote","fire_trigger",{trigger_id:RUNNER,text:note});return true}
+ catch(e){log(`Queued, but the runner couldn't be started from this page (${esc(e&&e.code||"unavailable")}). Ask Claude to run the "Agent Office" scheduled task, or click the button again later.`,"err");return false}}
+async function queueJob(col,id,data){
+ if(!db){log("Outside actions need the office database. Open the page on claude.ai while signed in.","err");return}
+ const doc={...data,status:"queued",requested:Date.now(),error:"",prUrl:"",note:""};
+ (col==="ship"?ships:outbox).set(id,doc);render();
+ try{await db.collection(col).doc(id).set(doc)}catch(e){log("Couldn't queue that action. Try again.","err");return}
+ pokeRunner(`New ${col} job: ${id}`)}
+function sendToGitHub(t){
+ queueJob("ship",t.id,{taskId:t.id,title:t.title,repo:ghRepo});
+ log(`Sending the code for <b>${esc(t.title)}</b> to GitHub (${esc(ghRepo)}).`);Office3D.say("relay","Sending the code to GitHub now.")}
+function proposalText(p){
+ const pr=p.proposal,b=budget(p);
+ return [`Project proposal: ${pr.title} (version ${p.version})`,"",pr.summary,"",
+  `Budget: ${money(b.total)} to build (${b.hours} hours at ${money(rate)}/hour, ${b.pct}% contingency included)`+(b.month?`; ${money(b.month)} per month to run.`:"."),
+  `Timeline: ${totalWeeks(pr)} weeks`,...pr.phases.map(ph=>`- ${ph.name}: weeks ${ph.start_week}-${ph.start_week+ph.weeks-1}`),"",
+  "In scope:",...pr.scope_in.map(x=>"- "+x),"","Not in scope:",...(pr.scope_out.length?pr.scope_out:["Nothing listed"]).map(x=>"- "+x),"",
+  "Solution design:",pr.solution_design,"","Risks:",...pr.risks.map(r=>`- ${r.risk}${r.mitigation?" (mitigation: "+r.mitigation+")":""}`),"",
+  "Review it, discuss it with Atlas, and approve or send changes in your Agent Office.","These figures are estimates by AI agents. Check them before quoting a client."].join("\n").slice(0,12000)}
+function emailProposal(p){
+ queueJob("outbox",p.id+"-email",{type:"email",to:ownerEmail,subject:`Proposal: ${p.proposal.title} (version ${p.version})`,body:proposalText(p),propId:p.id});
+ log(`Emailing the proposal for <b>${esc(p.title)}</b>.`);Office3D.say("atlas","I'll email you the proposal.")}
+function calendarProposal(p){
+ const inp=$("calIn"),err=$("calErr");const v=inp&&inp.value;
+ if(!v){if(err)err.textContent="Pick a date and time for the review first.";return}
+ const d=new Date(v);if(isNaN(d)||d<new Date()){if(err)err.textContent="Pick a time in the future.";return}
+ const off=-d.getTimezoneOffset(),sign=off>=0?"+":"-",pad=n=>String(Math.floor(Math.abs(n))).padStart(2,"0");
+ const start=`${v.length===16?v+":00":v}${sign}${pad(off/60)}:${pad(off%60)}`;
+ queueJob("outbox",p.id+"-cal",{type:"calendar",title:`Proposal review: ${p.proposal.title}`,start,minutes:30,description:proposalText(p).slice(0,3000),propId:p.id});
+ log(`Adding a review meeting for <b>${esc(p.title)}</b> to your calendar.`);Office3D.say("atlas","I'll put the review on your calendar.")}
+function jobStatus(j,doneText){
+ if(!j)return"";
+ if(j.status==="done")return`<span class="st ok">${doneText(j)}</span>`;
+ if(j.status==="failed")return`<span class="st bad">${esc(j.error||"Something went wrong. Try again.")}</span>`;
+ return`<span class="st">${j.status==="working"?"Working on it…":"Queued. The runner usually starts within a minute."}</span>`}
+function shipBlock(t){
+ if(!hasCode(t))return"";const j=ships.get(t.id),busy=j&&(j.status==="queued"||j.status==="working");
+ return`<div class="ext"><button class="btn" data-ext="ship" data-id="${t.id}" ${busy||!db?"disabled":""}>${j&&j.status==="done"?"Send updated code to GitHub":"Send code to GitHub"}</button>${jobStatus(j,j=>`Pull request open: <a href="${esc(j.prUrl)}" target="_blank" rel="noopener">${esc(j.prUrl.replace("https://github.com/",""))}</a>`)}</div>`}
+function outboxBlock(p){
+ const e=outbox.get(p.id+"-email"),c=outbox.get(p.id+"-cal"),eb=e&&(e.status==="queued"||e.status==="working"),cb=c&&(c.status==="queued"||c.status==="working");
+ const t=new Date(Date.now()+86400000);t.setHours(10,0,0,0);const def=new Date(t-t.getTimezoneOffset()*60000).toISOString().slice(0,16);
+ return`<div class="ext"><button class="btn" data-ext="email" data-id="${p.id}" ${eb||!db?"disabled":""}>Email me this proposal</button>${jobStatus(e,j=>esc(j.note||"Sent to your inbox."))}</div>
+  <div class="ext"><label for="calIn">Review meeting</label><input type="datetime-local" id="calIn" value="${def}"><button class="btn" data-ext="cal" data-id="${p.id}" ${cb||!db?"disabled":""}>Add to my calendar</button>${jobStatus(c,j=>esc(j.note||"Added to your calendar."))}<span class="field-err" id="calErr"></span></div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ext]");if(!b)return;const id=b.dataset.id;
+ if(b.dataset.ext==="ship"){const t=tasks.get(id);if(t)sendToGitHub(t)}
+ if(b.dataset.ext==="email"){const p=props.get(id);if(p&&p.proposal)emailProposal(p)}
+ if(b.dataset.ext==="cal"){const p=props.get(id);if(p&&p.proposal)calendarProposal(p)}});
+function watchJobs(col,map){db.collection(col).onSnapshot(snap=>{snap.docChanges().forEach(ch=>{const id=ch.doc.id;if(ch.type==="removed"){map.delete(id);return}
+  const prev=map.get(id),d=JSON.parse(JSON.stringify(ch.doc.data()));map.set(id,d);
+  if(prev&&prev.status!=="done"&&d.status==="done"){if(col==="ship"){Office3D.say("relay","The pull request is open on GitHub.");log(`Pull request opened for <b>${esc(d.title)}</b>.`,"ship")}else log(`${d.type==="email"?"Proposal emailed":"Review meeting added to your calendar"}.`,"ship")}
+  if(prev&&prev.status!=="failed"&&d.status==="failed")log(esc(d.error||"An outside action failed."),"err")});render()},()=>{})}
 /* ---------- boot ---------- */
 render();
+{let saved=null;try{saved=localStorage.getItem("office-view")}catch(_){}setView(saved!=="2d")}
 (async()=>{
  const cl=window.claude;
  if(!cl||!cl.use){showBanner("Agents need Claude. Open this page on claude.ai while signed in to run them.");return}
@@ -1092,7 +1459,9 @@ render();
  else{
   db.doc("settings/codebase").get().then(sn=>{if(sn.exists&&Array.isArray(sn.data().files)){codeFiles=sn.data().files.filter(f=>f&&f.path&&typeof f.text==="string");renderFiles()}}).catch(()=>{});
   db.doc("settings/company").get().then(sn=>{if(!sn.exists)return;const d=sn.data();if(d.profile){company=d.profile;$("company").value=company}
-   if(d.rate){rate=num(d.rate,1,2000,85);$("rateIn").value=rate}if(/^[A-Z]{3}$/.test(d.currency||"")){currency=d.currency;$("curIn").value=currency}render()}).catch(()=>{});
+   if(d.rate){rate=num(d.rate,1,2000,85);$("rateIn").value=rate}if(/^[A-Z]{3}$/.test(d.currency||"")){currency=d.currency;$("curIn").value=currency}
+   if(d.ghRepo){ghRepo=d.ghRepo;$("ghIn").value=ghRepo}if(d.email){ownerEmail=d.email;$("mailIn").value=ownerEmail}render()}).catch(()=>{});
+  watchJobs("ship",ships);watchJobs("outbox",outbox);
   db.collection("proposals").orderBy("created","desc").limit(30).onSnapshot(snap=>{
    snap.docChanges().forEach(ch=>{const id=ch.doc.id;
     if(run&&run.taskId===id)return;
