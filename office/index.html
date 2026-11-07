@@ -181,6 +181,7 @@ dl.facts dd{margin:0;min-width:0}
 .feed .ship{color:var(--ok);font-weight:600}
 .feed .gate{color:var(--gate);font-weight:500}
 .feed .err{color:var(--bad)}
+[hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .ext{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
 .ext .st{color:var(--muted)}
@@ -188,6 +189,15 @@ dl.facts dd{margin:0;min-width:0}
 .ext .st.bad{color:var(--bad)}
 .ext a{color:var(--plan)}
 .ext input[type=datetime-local]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink);font:inherit}
+.ask3d{position:absolute;left:12px;right:12px;bottom:34px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.ask3d input{flex:1 1 240px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--paper);color:var(--ink);font:inherit}
+.ask3d .field-err{flex:1 1 100%}
+.ask3d .field-err:empty{display:none}
+.inbox3d{position:absolute;left:12px;top:12px;max-width:min(360px,calc(100% - 24px));display:grid;gap:6px;background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--gate);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.inbox3d .eyebrow{color:var(--gate)}
+.inbox3d button{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;font-size:13px}
+.inbox3d button span{color:var(--muted);font-size:12px;white-space:nowrap}
+.hint3d{top:12px;bottom:auto!important;right:12px;left:auto!important;text-align:right}
 .viewbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}
 .viewtools{display:flex;gap:8px}
 .stage3d{position:relative;height:clamp(360px,min(64vh,110vw),680px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--scene)}
@@ -320,7 +330,11 @@ ul.est span{font-family:var(--mono);color:var(--muted);white-space:nowrap}
       <section>
         <div class="viewbar"><span class="mode" role="group" aria-label="Office view"><button type="button" id="v3d" aria-pressed="true">3D office</button><button type="button" id="v2d" aria-pressed="false">Floor plan</button></span>
           <span class="viewtools" id="viewTools"><button class="btn" type="button" id="vTop">Top view</button><button class="btn" type="button" id="vReset">Reset view</button></span></div>
-        <div class="stage3d" id="stage3d" hidden><div class="tip3d" hidden></div><span class="hint3d">Drag to orbit · scroll to zoom · select a person</span></div>
+        <div class="stage3d" id="stage3d" hidden><div class="tip3d" hidden></div><span class="hint3d">Drag to orbit · scroll to zoom · select a person</span>
+          <div class="inbox3d" id="inbox3d" hidden></div>
+          <form class="ask3d" id="ask3d"><span class="mode" role="group" aria-label="What to ask for"><button type="button" id="m3P" aria-pressed="true">Proposal</button><button type="button" id="m3T" aria-pressed="false">Delivery task</button></span>
+            <label for="ask3dIn" class="sr">Tell Atlas what you need</label><input id="ask3dIn" placeholder="Tell Atlas what you need…" autocomplete="off" maxlength="600"><button class="btn primary" type="submit" id="ask3dBtn">Send to Atlas</button>
+            <span class="field-err" id="ask3dErr"></span></form></div>
         <div class="floor" id="floor"></div>
         <div class="legend" id="legend2d">
           <span><i style="background:var(--ok)"></i>Working now</span>
@@ -1016,7 +1030,11 @@ function render(){
    <span class="trail">${t.team.map((s,i)=>`<i class="${i<t.idx?"done":i===t.idx&&t.status!=="shipped"?"now":""}"></i>`).join("")}</span>
    <span class="t-meta">${t.kind?esc(t.kind)+" · "+esc(t.priority)+" · ":""}${esc(where)}</span></button>`}).join("")
   :`<p class="empty">Nothing yet. Tell Atlas your requirement above and the team will come back with a proposal.</p>`;
- renderWS();renderInsp()}
+ renderWS();renderInsp();renderInbox3d()}
+function renderInbox3d(){const box=$("inbox3d");if(!box)return;
+ const items=[...props.values()].filter(p=>p.status==="review").map(p=>({id:p.id,t:`Proposal ready: ${p.proposal?p.proposal.title:p.title}`,s:p.proposal?money(budget(p).total):""}))
+  .concat([...tasks.values()].filter(t=>t.status==="approval").map(t=>({id:t.id,t:`Approve release: ${t.title}`,s:"Relay is waiting"})));
+ box.hidden=!items.length;box.innerHTML=items.length?`<div class="eyebrow">Waiting for you</div>`+items.slice(0,4).map(i=>`<button type="button" data-open="${i.id}">${esc(i.t)}<span>${esc(i.s)}</span></button>`).join(""):""}
 
 function renderWS(){
  const ws=$("ws");if(selTask&&isProp(selTask)&&props.get(selTask))return renderProposal(props.get(selTask));
@@ -1074,7 +1092,16 @@ document.addEventListener("click",async e=>{
 $("assign").addEventListener("submit",e=>{e.preventDefault();const v=$("taskInput").value.trim();if(!v||!live||blocked)return;$("taskInput").value="";if(mode==="proposal")newProposal(v);else newTask(v)});
 document.addEventListener("submit",e=>{const f=e.target.closest("#chatForm");if(!f)return;e.preventDefault();const p=props.get(f.dataset.id),inp=$("chatIn");const v=(inp&&inp.value||"").trim();if(!p||!v||chatRun)return;inp.value="";askAtlas(p,v)});
 document.addEventListener("input",e=>{if(e.target&&e.target.id==="chgIn"){const er=$("chgErr");if(er)er.textContent=""}});
+$("ask3d").addEventListener("submit",e=>{e.preventDefault();const v=$("ask3dIn").value.trim(),err=$("ask3dErr");
+ if(!v){err.textContent="Type what you need first.";return}
+ if(!live||blocked){err.textContent="The agents are offline here. Open the page on claude.ai while signed in.";return}
+ err.textContent="";$("ask3dIn").value="";
+ Office3D.handoff("you","atlas",excerpt(v,110),mode==="proposal"?"Got it. I'll get the team together and come back with a proposal.":"Got it. I'll get the team on it.");
+ if(mode==="proposal")newProposal(v);else newTask(v)});
+$("ask3dIn").addEventListener("input",()=>{$("ask3dErr").textContent=""});
+$("m3P").addEventListener("click",()=>setMode("proposal"));$("m3T").addEventListener("click",()=>setMode("task"));
 function setMode(m){mode=m;$("modeP").setAttribute("aria-pressed",String(m==="proposal"));$("modeT").setAttribute("aria-pressed",String(m!=="proposal"));
+ $("m3P").setAttribute("aria-pressed",String(m==="proposal"));$("m3T").setAttribute("aria-pressed",String(m!=="proposal"));$("ask3dIn").placeholder=m==="proposal"?"Tell Atlas what you need…":"Give the team a task…";
  $("assignBtn").textContent=m==="proposal"?"Ask for a proposal":"Assign task";
  $("taskInput").placeholder=m==="proposal"?"e.g. A customer portal where our clients can log in with Okta and download their reports":"e.g. Add SSO login with Okta to the customer portal";
  $("leadText").textContent=m==="proposal"?"Tell Atlas your requirement. The team discusses it and comes back with a proposal for your approval. Agents run on your Claude account; the first run asks you to allow this page to use Claude.":"Hand a task straight to delivery. Atlas picks the team, Lens reviews the code, and nothing is released until you approve it.";
@@ -1249,7 +1276,7 @@ const Office3D=(function(){
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),tip=stage.querySelector(".tip3d");let downAt=null;
   const pick=ev=>{const r=renderer.domElement.getBoundingClientRect();mouse.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObjects(pickables,false)[0];return h&&h.object.userData.id};
   renderer.domElement.addEventListener("pointerdown",e=>{downAt=[e.clientX,e.clientY]});
-  renderer.domElement.addEventListener("pointerup",e=>{if(!downAt)return;const mv=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(mv>6)return;const id=pick(e);if(id&&A[id]){selAgent=id;render()}});
+  renderer.domElement.addEventListener("pointerup",e=>{if(!downAt)return;const mv=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]);downAt=null;if(mv>6)return;const id=pick(e);if(id==="atlas"||id==="you"){const i=document.getElementById("ask3dIn");if(i)i.focus()}if(id&&A[id]){selAgent=id;render()}});
   renderer.domElement.addEventListener("pointermove",e=>{const id=e.pointerType==="mouse"?pick(e):null;renderer.domElement.style.cursor=id?"pointer":"grab";if(id&&tip){const r=stage.getBoundingClientRect();tip.hidden=false;tip.innerHTML=`<b>${C[id].name}</b>${doing(id)}`;tip.style.left=(e.clientX-r.left)+"px";tip.style.top=(e.clientY-r.top)+"px"}else if(tip)tip.hidden=true});
   renderer.domElement.addEventListener("pointerleave",()=>{if(tip)tip.hidden=true});
   const fit=v=>v.clone().multiplyScalar(Math.max(1,1.6/camera.aspect));
