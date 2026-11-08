@@ -238,3 +238,22 @@ def test_every_container_gets_its_own_name(tmp_path, monkeypatch):
     runner.run(["a"], tmp_path, 5)
     runner.run(["b"], tmp_path, 5)
     assert len(set(names)) == 2 and all(n.startswith("ai-office-") for n in names)
+
+
+def test_a_same_length_rewrite_is_not_hidden_by_stale_bytecode(tmp_path):
+    """A repair that rewrites a file with the same size within the same second must still be re-read."""
+    (tmp_path / "tests").mkdir()
+    calc, test = tmp_path / "calc.py", tmp_path / "tests/test_calc.py"
+    test.write_text("from calc import add\n\ndef test_add():\n    assert add(2, 2) == 4\n")
+    calc.write_text("def add(a, b):\n    return a - b\n")
+    assert run_checks(tmp_path)[0] == "FAILED"
+    stamp = calc.stat().st_mtime_ns
+    calc.write_text("def add(a, b):\n    return a + b\n")
+    os.utime(calc, ns=(stamp, stamp))               # the same timestamp and the same size as before
+    assert run_checks(tmp_path)[0] == "PASSED"
+    assert not list(tmp_path.rglob("__pycache__"))
+
+
+def test_docker_checks_do_not_write_bytecode_either(tmp_path):
+    cmd = DockerRunner(tmp_path).command(["pytest"], tmp_path)
+    assert "PYTHONDONTWRITEBYTECODE=1" in cmd

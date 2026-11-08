@@ -25,6 +25,8 @@ SANDBOX_IMAGE = "ai-office-checks"
 SANDBOX_DIR = Path(__file__).parent / "sandbox"
 RUFF_RULES = "E9,F63,F7,F82"   # syntax errors and undefined names only, never style
 NO_TEST_SCRIPT = "no test specified"
+# A repair that rewrites a file with the same length in the same second would otherwise reuse the old .pyc.
+NO_BYTECODE = {"PYTHONDONTWRITEBYTECODE": "1"}
 
 
 def safe_env() -> dict[str, str]:
@@ -39,7 +41,7 @@ class LocalRunner:
     def run(self, cmd: list[str], cwd: Path, timeout: int, network: bool = False,
             env: dict[str, str] | None = None) -> tuple[int, str]:
         try:
-            p = subprocess.run(cmd, cwd=cwd, env={**safe_env(), **(env or {})}, capture_output=True,
+            p = subprocess.run(cmd, cwd=cwd, env={**safe_env(), **NO_BYTECODE, **(env or {})}, capture_output=True,
                                text=True, timeout=timeout)
             return p.returncode, (p.stdout + p.stderr)[-3000:]
         except subprocess.TimeoutExpired:
@@ -73,7 +75,7 @@ class DockerRunner:
                "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                "--user", f"{os.getuid()}:{os.getgid()}", "--tmpfs", "/tmp", "-e", "HOME=/tmp",
                "-v", f"{self.root}:/work", "-w", "/work" if rel == "." else f"/work/{rel}"]
-        for k, v in (env or {}).items():
+        for k, v in {**NO_BYTECODE, **(env or {})}.items():
             out += ["-e", f"{k}={v}"]
         return out + [self.image, *cmd]
 
