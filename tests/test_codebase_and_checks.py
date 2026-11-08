@@ -1,4 +1,3 @@
-import os
 
 from agents.checks import run_checks, safe_env
 from agents.codebase import build_context, list_files
