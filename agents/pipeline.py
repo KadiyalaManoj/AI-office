@@ -76,7 +76,7 @@ def history_text(history: list[tuple[str, str]]) -> str:
     latest = {aid: i for i, (aid, _) in enumerate(history)}
     parts = []
     for i, (aid, text) in enumerate(history):
-        if aid in CODERS and latest[aid] != i:
+        if (aid in CODERS or aid == CHECKS) and latest[aid] != i:
             body, limit = text, SUPERSEDED_LIMIT
             note = "\n...(earlier draft, replaced by a later version below)"
         elif aid in CODERS or aid == CHECKS:
@@ -149,11 +149,48 @@ FILE_RE = re.compile(
 )
 
 
+def reply_problem(agent_id: str, text: str) -> str | None:
+    """What is wrong with a reply's required format, or None if it is fine.
+
+    Only the formats the pipeline depends on are checked: code needs `File:` blocks, Lens needs a verdict,
+    Probe needs a QA status.
+    """
+    if agent_id in CODERS and not FILE_RE.search(text):
+        return ("it has no files the office can save. Put each file's complete contents in a fenced code "
+                "block preceded by a line `File: <relative/path>`.")
+    if agent_id == "lens" and lens_verdict(text) == "NO VERDICT":
+        return "it does not end with the final line `VERDICT: APPROVE` or `VERDICT: CHANGES REQUESTED`."
+    if agent_id == "probe" and not re.search(r"QA:\s*(READY|BLOCKED)", text, re.I):
+        return "it does not end with the final line `QA: READY` or `QA: BLOCKED - <reason>`."
+    return None
+
+
+def correction_prompt(prompt: str, problem: str) -> str:
+    return (f"{prompt}\n\n---\nYour previous reply was rejected because {problem}\n"
+            "Write the complete reply again from the start and follow the required format exactly.")
+
+
+def plan_problem(plan: dict) -> str | None:
+    """Why Atlas's parsed plan is unusable, or None. Only the team is essential; other fields have defaults."""
+    if not plan:
+        return "it was not a JSON object."
+    if not isinstance(plan.get("team"), list) or not plan["team"]:
+        return 'the JSON has no non-empty "team" list.'
+    return None
+
+
 @dataclass
 class Extracted:
     saved: list[Path] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     unlabeled_blocks: int = 0
+
+
+def _strip_path_comment(body: str, path: str) -> str:
+    """Drop a first line that only repeats the file's own path, e.g. `# File: app/x.py` or `// File: x.ts`."""
+    first, _, rest = body.partition("\n")
+    marker = rf"^\s*(?:#|//|--|;|/\*|<!--)?\s*File:\s*[`*]*{re.escape(path)}[`*]*\s*(?:\*/|-->)?\s*$"
+    return rest.lstrip("\n") if re.match(marker, first) else body
 
 
 def extract_files(text: str, dest: Path) -> Extracted:
@@ -167,7 +204,7 @@ def extract_files(text: str, dest: Path) -> Extracted:
             result.skipped.append(m.group("path"))
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(m.group("body"))
+        target.write_text(_strip_path_comment(m.group("body"), m.group("path")))
         result.saved.append(target)
     total_blocks = len(re.findall(r"^[ \t]*```[^\n]*\n.*?^[ \t]*```", text, re.M | re.S))
     result.unlabeled_blocks = max(0, total_blocks - len(result.saved) - len(result.skipped))

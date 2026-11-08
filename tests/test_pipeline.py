@@ -1,4 +1,3 @@
-from pathlib import Path
 
 import pytest
 
@@ -164,3 +163,14 @@ def test_unique_dir(tmp_path):
     base.mkdir()
     (tmp_path / "run-2").mkdir()
     assert unique_dir(base) == tmp_path / "run-3"
+
+
+def test_a_path_comment_repeated_inside_the_block_is_not_saved(tmp_path):
+    text = ("### File: services/math.py\n\n```python\n# File: services/math.py\n\ndef add(a, b):\n"
+            "    return a + b\n```\n\nFile: web/app.ts\n```ts\n// File: web/app.ts\nexport const a = 1;\n```\n"
+            "File: keep.py\n```python\n# File: other.py is a real comment here\nx = 1\n```\n")
+    got = extract_files(text, tmp_path)
+    assert len(got.saved) == 3
+    assert (tmp_path / "services/math.py").read_text() == "def add(a, b):\n    return a + b\n"
+    assert (tmp_path / "web/app.ts").read_text() == "export const a = 1;\n"
+    assert (tmp_path / "keep.py").read_text().startswith("# File: other.py")

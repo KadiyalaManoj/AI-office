@@ -27,3 +27,4 @@ jobs:
         with:
           node-version: "20"
       - run: node tests/page/page_logic.test.js
+      - run: node tests/page/local_shim.test.js

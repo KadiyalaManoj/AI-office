@@ -41,7 +41,8 @@ AGENTS: dict[str, Agent] = {a.id: a for a in [
           "Builds the UI in React and TypeScript from the design and the APIs.",
           "Implement the frontend tickets in React with TypeScript. Give the essential component code in "
           "fenced code blocks, each preceded by a line `File: <relative/path.tsx>`, under 120 lines in "
-          "total. Give each file's complete contents. If Lens requested changes above, fix every finding "
+          "total. Give each file's complete contents. If Lens requested changes or automated checks failed "
+          "above, fix every finding "
           "and list what you changed.",
           writes_code=True),
     Agent("lens", "Lens", "Code reviewer",
